@@ -380,9 +380,25 @@ body.is-ready .scroll-cue {
 .departure {
   position: relative;
   z-index: 2;
-  min-height: 150svh;
+  height: 520svh;
+  background: transparent;
+}
+
+.journey-viewport {
+  position: sticky;
+  top: 0;
+  height: 100svh;
   overflow: hidden;
-  background: linear-gradient(to bottom, transparent, rgba(3, 4, 5, 0.16) 30%, #030405 80%);
+  isolation: isolate;
+  background: linear-gradient(to bottom, rgba(3, 4, 5, 0.04), rgba(3, 4, 5, 0.5));
+}
+
+.journey-canvas {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .departure__copy {
@@ -391,8 +407,9 @@ body.is-ready .scroll-cue {
   top: 34%;
   left: var(--page-padding);
   max-width: 35rem;
-  opacity: var(--departure-opacity, 0);
-  transform: translateY(calc((1 - var(--departure-progress, 0)) * 3rem));
+  opacity: var(--departure-copy-opacity, 0);
+  transform: translateY(var(--departure-copy-y, 3rem));
+  will-change: transform, opacity;
 }
 
 .departure__index {
@@ -425,30 +442,75 @@ body.is-ready .scroll-cue {
   left: 50%;
   width: 1px;
   background: linear-gradient(transparent, var(--line) 30%, transparent 80%);
-  opacity: 0.35;
+  opacity: var(--guide-opacity, 0.12);
 }
 
-.earth-limb {
+.scale-label {
   position: absolute;
-  right: -20vw;
-  bottom: -52vw;
-  width: min(94vw, 92rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  opacity: var(--departure-opacity, 0);
-  background:
-    radial-gradient(circle at 32% 16%, rgba(118, 139, 146, 0.18), transparent 22%),
-    radial-gradient(circle at 50% 40%, #111619, #050708 63%, #020303 69%);
-  box-shadow: -0.45rem -0.45rem 2.8rem rgba(137, 195, 224, 0.13);
-  transform: translate3d(calc((1 - var(--departure-progress, 0)) * 10vw), calc((1 - var(--departure-progress, 0)) * 8vw), 0) scale(calc(1.14 - var(--departure-progress, 0) * 0.14));
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
-.earth-limb__atmosphere {
+.scale-label::before {
+  content: "";
   position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  border-top: 2px solid rgba(152, 207, 235, 0.32);
-  filter: blur(1px);
+  top: 0.35rem;
+  right: calc(100% + 0.75rem);
+  width: clamp(1.5rem, 5vw, 5rem);
+  height: 1px;
+  background: var(--line);
+}
+
+.scale-label--earth {
+  top: 21%;
+  right: var(--page-padding);
+  text-align: right;
+  opacity: var(--earth-label-opacity, 0);
+  transform: translateX(calc((1 - var(--earth-label-opacity, 0)) * 1rem));
+}
+
+.scale-label--moon {
+  top: 23%;
+  left: var(--page-padding);
+  opacity: var(--moon-label-opacity, 0);
+  transform: translateY(calc((1 - var(--moon-label-opacity, 0)) * 1rem));
+}
+
+.scale-label--moon::before {
+  right: auto;
+  left: calc(100% + 0.75rem);
+}
+
+.scale-label__name,
+.scale-label__distance {
+  color: var(--white);
+  font-size: clamp(0.76rem, 1vw, 0.95rem);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+}
+
+.scale-label__detail {
+  color: rgba(240, 241, 238, 0.38);
+  font-size: 0.57rem;
+  letter-spacing: 0.2em;
+}
+
+.journey-progress {
+  position: absolute;
+  right: var(--page-padding);
+  bottom: 1.8rem;
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  color: rgba(240, 241, 238, 0.32);
+  font-size: 0.57rem;
+  letter-spacing: 0.2em;
+  opacity: var(--journey-ui-opacity, 0);
 }
 
 @keyframes load-progress {
@@ -487,13 +549,15 @@ body.is-ready .scroll-cue {
   }
 
   .departure__copy {
-    top: 25%;
+    top: 20%;
   }
 
-  .earth-limb {
-    right: -35vw;
-    bottom: -28vw;
-    width: 125vw;
+  .scale-label--earth {
+    top: 13%;
+  }
+
+  .scale-label--moon {
+    top: 17%;
   }
 }
 

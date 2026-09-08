@@ -73,14 +73,30 @@
       </section>
 
       <section class="departure" id="departure" aria-labelledby="departure-title">
-        <div class="departure__guide" aria-hidden="true"></div>
-        <div class="departure__copy">
-          <p class="departure__index">01 / DEPARTURE</p>
-          <h2 id="departure-title">BEGIN WITH<br />WHAT WE KNOW.</h2>
-          <p>Our journey starts close to home.</p>
-        </div>
-        <div class="earth-limb" aria-hidden="true">
-          <div class="earth-limb__atmosphere"></div>
+        <div class="journey-viewport">
+          <canvas class="journey-canvas" aria-hidden="true"></canvas>
+          <div class="departure__guide" aria-hidden="true"></div>
+
+          <div class="departure__copy">
+            <p class="departure__index">01 / DEPARTURE</p>
+            <h2 id="departure-title">BEGIN WITH<br />WHAT WE KNOW.</h2>
+            <p>Our journey starts close to home.</p>
+          </div>
+
+          <div class="scale-label scale-label--earth" aria-hidden="true">
+            <span class="scale-label__name">EARTH</span>
+            <span class="scale-label__detail">12,742 KM DIAMETER</span>
+          </div>
+
+          <div class="scale-label scale-label--moon" aria-hidden="true">
+            <span class="scale-label__distance">384,400 KM</span>
+            <span class="scale-label__detail">MEAN LUNAR DISTANCE</span>
+          </div>
+
+          <p class="journey-progress" aria-hidden="true">
+            <span>EARTH SYSTEM</span>
+            <span class="journey-progress__value">000</span>
+          </p>
         </div>
       </section>
     </main>
