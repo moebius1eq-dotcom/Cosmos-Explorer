@@ -17,6 +17,15 @@ let animationFrame = 0;
 let pixelRatio = 1;
 let journeyPixelRatio = 1;
 let currentJourneyProgress = 0;
+let earthTexture = null;
+let moonTexture = null;
+
+const earthImage = new Image();
+earthImage.src = "assets/earth-blue-marble.jpg";
+earthImage.addEventListener("load", () => {
+  earthTexture = createEarthTexture(earthImage);
+  drawJourney(currentJourneyProgress);
+});
 
 const loadingStates = [
   [450, "CALIBRATING OPTICS"],
@@ -78,10 +87,93 @@ function mix(start, end, amount) {
   return start + (end - start) * amount;
 }
 
+function createEarthTexture(image) {
+  const size = 1024;
+  const texture = document.createElement("canvas");
+  const textureContext = texture.getContext("2d");
+  texture.width = size;
+  texture.height = size;
+
+  textureContext.save();
+  textureContext.beginPath();
+  textureContext.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+  textureContext.clip();
+
+  for (let row = 0; row < size; row += 1) {
+    const latitude = row / size * 2 - 1;
+    const chord = Math.sqrt(Math.max(0, 1 - latitude * latitude));
+    const destinationWidth = size * chord;
+    const sourceY = Math.floor((row / size) * image.height);
+    textureContext.drawImage(
+      image,
+      image.width * 0.04,
+      sourceY,
+      image.width * 0.5,
+      Math.max(1, image.height / size + 0.5),
+      (size - destinationWidth) / 2,
+      row,
+      destinationWidth,
+      1.4,
+    );
+  }
+
+  textureContext.restore();
+  return texture;
+}
+
+function seededNoise(x, y) {
+  const value = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function createMoonTexture() {
+  const size = 512;
+  const texture = document.createElement("canvas");
+  texture.width = size;
+  texture.height = size;
+  const textureContext = texture.getContext("2d");
+  const imageData = textureContext.createImageData(size, size);
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const normalizedX = x / size * 2 - 1;
+      const normalizedY = y / size * 2 - 1;
+      const distance = normalizedX * normalizedX + normalizedY * normalizedY;
+      const index = (y * size + x) * 4;
+
+      if (distance > 1) {
+        imageData.data[index + 3] = 0;
+        continue;
+      }
+
+      const largeNoise = seededNoise(Math.floor(x / 18), Math.floor(y / 18));
+      const mediumNoise = seededNoise(Math.floor(x / 5), Math.floor(y / 5));
+      const fineNoise = seededNoise(x, y);
+      const surface = largeNoise * 0.48 + mediumNoise * 0.34 + fineNoise * 0.18;
+      const sphereZ = Math.sqrt(Math.max(0, 1 - distance));
+      const directional = clamp(
+        sphereZ * 0.78 - normalizedX * 0.34 - normalizedY * 0.1,
+        0.08,
+        1,
+      );
+      const edgeShade = Math.pow(sphereZ, 0.42);
+      const value = Math.round((70 + surface * 78) * directional * edgeShade);
+
+      imageData.data[index] = value;
+      imageData.data[index + 1] = value;
+      imageData.data[index + 2] = Math.min(255, value + 2);
+      imageData.data[index + 3] = 255;
+    }
+  }
+
+  textureContext.putImageData(imageData, 0, 0);
+  return texture;
+}
+
 function drawEarth(context2d, x, y, radius, reveal) {
-  const atmosphere = context2d.createRadialGradient(x, y, radius * 0.78, x, y, radius * 1.08);
-  atmosphere.addColorStop(0.88, "rgba(98, 155, 185, 0)");
-  atmosphere.addColorStop(0.97, `rgba(124, 190, 220, ${0.18 + reveal * 0.16})`);
+  const atmosphere = context2d.createRadialGradient(x, y, radius * 0.88, x, y, radius * 1.045);
+  atmosphere.addColorStop(0.9, "rgba(98, 155, 185, 0)");
+  atmosphere.addColorStop(0.982, `rgba(111, 183, 220, ${0.1 + reveal * 0.1})`);
   atmosphere.addColorStop(1, "rgba(124, 190, 220, 0)");
   context2d.fillStyle = atmosphere;
   context2d.beginPath();
@@ -93,79 +185,38 @@ function drawEarth(context2d, x, y, radius, reveal) {
   context2d.arc(x, y, radius, 0, Math.PI * 2);
   context2d.clip();
 
-  const ocean = context2d.createRadialGradient(
+  if (earthTexture) {
+    context2d.drawImage(earthTexture, x - radius, y - radius, radius * 2, radius * 2);
+  } else {
+    context2d.fillStyle = "#102a36";
+    context2d.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  }
+
+  const daylight = context2d.createRadialGradient(
     x - radius * 0.38,
     y - radius * 0.42,
-    radius * 0.08,
+    radius * 0.05,
     x,
     y,
-    radius * 1.12,
+    radius * 1.18,
   );
-  ocean.addColorStop(0, "#527c8c");
-  ocean.addColorStop(0.42, "#1c3b49");
-  ocean.addColorStop(0.78, "#0b1820");
-  ocean.addColorStop(1, "#020506");
-  context2d.fillStyle = ocean;
+  daylight.addColorStop(0, "rgba(215, 233, 236, 0.2)");
+  daylight.addColorStop(0.44, "rgba(56, 94, 111, 0.06)");
+  daylight.addColorStop(1, "rgba(0, 0, 0, 0.42)");
+  context2d.fillStyle = daylight;
   context2d.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-
-  context2d.fillStyle = `rgba(94, 115, 91, ${0.48 + reveal * 0.18})`;
-  const landforms = [
-    [
-      [-0.73, -0.44], [-0.58, -0.56], [-0.38, -0.52], [-0.25, -0.39],
-      [-0.31, -0.26], [-0.44, -0.19], [-0.5, -0.06], [-0.61, -0.14],
-      [-0.67, -0.28],
-    ],
-    [
-      [-0.43, -0.05], [-0.29, -0.02], [-0.22, 0.11], [-0.27, 0.3],
-      [-0.39, 0.52], [-0.49, 0.36], [-0.53, 0.14],
-    ],
-    [
-      [-0.07, -0.5], [0.09, -0.58], [0.31, -0.5], [0.46, -0.4],
-      [0.35, -0.28], [0.15, -0.3], [0.08, -0.18], [-0.05, -0.22],
-    ],
-    [
-      [0.02, -0.17], [0.19, -0.22], [0.35, -0.08], [0.29, 0.12],
-      [0.16, 0.34], [0.02, 0.22], [-0.05, 0.02],
-    ],
-    [[0.38, 0.26], [0.53, 0.23], [0.58, 0.34], [0.45, 0.42], [0.34, 0.36]],
-  ];
-  landforms.forEach((points) => {
-    context2d.beginPath();
-    points.forEach(([pointX, pointY], index) => {
-      const method = index === 0 ? "moveTo" : "lineTo";
-      context2d[method](x + pointX * radius, y + pointY * radius);
-    });
-    context2d.closePath();
-    context2d.fill();
-  });
-
-  const cloudBands = [
-    [-0.52, -0.3, 0.72, 0.055, -0.18],
-    [-0.18, 0.12, 0.85, 0.045, 0.08],
-    [0.16, 0.43, 0.58, 0.038, -0.12],
-  ];
-  context2d.fillStyle = "rgba(225, 234, 232, 0.22)";
-  cloudBands.forEach(([offsetX, offsetY, width, height, rotation]) => {
-    context2d.save();
-    context2d.translate(x + offsetX * radius, y + offsetY * radius);
-    context2d.rotate(rotation);
-    context2d.beginPath();
-    context2d.ellipse(0, 0, width * radius, height * radius, 0, 0, Math.PI * 2);
-    context2d.fill();
-    context2d.restore();
-  });
 
   const night = context2d.createLinearGradient(x - radius, y, x + radius, y);
   night.addColorStop(0, "rgba(0, 0, 0, 0)");
-  night.addColorStop(0.42, "rgba(0, 0, 0, 0.06)");
-  night.addColorStop(0.73, "rgba(0, 0, 0, 0.7)");
+  night.addColorStop(0.36, "rgba(0, 0, 0, 0.02)");
+  night.addColorStop(0.7, "rgba(0, 0, 0, 0.72)");
   night.addColorStop(1, "rgba(0, 0, 0, 0.98)");
   context2d.fillStyle = night;
   context2d.fillRect(x - radius, y - radius, radius * 2, radius * 2);
   context2d.restore();
 
-  context2d.strokeStyle = `rgba(158, 211, 233, ${0.22 + reveal * 0.18})`;
-  context2d.lineWidth = Math.max(1, radius * 0.004);
+  context2d.strokeStyle = `rgba(145, 209, 237, ${0.28 + reveal * 0.16})`;
+  context2d.lineWidth = Math.max(0.7, Math.min(1.8, radius * 0.0022));
   context2d.beginPath();
   context2d.arc(x, y, radius + context2d.lineWidth, Math.PI * 1.03, Math.PI * 1.72);
   context2d.stroke();
@@ -174,39 +225,24 @@ function drawEarth(context2d, x, y, radius, reveal) {
 function drawMoon(context2d, x, y, radius, opacity) {
   context2d.save();
   context2d.globalAlpha = opacity;
-  const surface = context2d.createRadialGradient(
-    x - radius * 0.28,
-    y - radius * 0.3,
-    radius * 0.1,
-    x,
-    y,
-    radius,
-  );
-  surface.addColorStop(0, "#b9bab4");
-  surface.addColorStop(0.68, "#676a68");
-  surface.addColorStop(1, "#171a1a");
-  context2d.fillStyle = surface;
+  moonTexture ||= createMoonTexture();
+  context2d.drawImage(moonTexture, x - radius, y - radius, radius * 2, radius * 2);
+  context2d.strokeStyle = "rgba(215, 220, 216, 0.13)";
+  context2d.lineWidth = Math.max(0.5, radius * 0.008);
   context2d.beginPath();
-  context2d.arc(x, y, radius, 0, Math.PI * 2);
-  context2d.fill();
-
-  context2d.fillStyle = "rgba(25, 28, 28, 0.2)";
-  [[-0.25, -0.18, 0.15], [0.2, 0.28, 0.11], [0.32, -0.22, 0.08]].forEach(
-    ([offsetX, offsetY, size]) => {
-      context2d.beginPath();
-      context2d.arc(x + offsetX * radius, y + offsetY * radius, size * radius, 0, Math.PI * 2);
-      context2d.fill();
-    },
-  );
+  context2d.arc(x, y, radius, Math.PI * 0.75, Math.PI * 1.72);
+  context2d.stroke();
   context2d.restore();
 }
 
 function drawJourney(progress) {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const reveal = smoothstep(range(progress, 0.02, 0.28));
-  const pullback = smoothstep(range(progress, 0.28, 0.83));
-  const moonReveal = smoothstep(range(progress, 0.74, 0.91));
+  const reveal = smoothstep(range(progress, 0.02, 0.34));
+  const linearPullback = smoothstep(range(progress, 0.24, 0.94));
+  const pullback = Math.pow(linearPullback, 1.65);
+  const positionPullback = Math.pow(linearPullback, 0.7);
+  const moonReveal = smoothstep(range(progress, 0.8, 0.95));
   const mobile = width < 700;
 
   journeyContext.clearRect(0, 0, width, height);
@@ -217,9 +253,9 @@ function drawJourney(progress) {
   const startX = width * (mobile ? 0.58 : 0.66);
   const startY = height + initialRadius * 0.58;
   const endX = width * (mobile ? 0.38 : 0.57);
-  const endY = height * (mobile ? 0.58 : 0.56);
+  const endY = height * (mobile ? 0.53 : 0.44);
   const earthX = mix(startX, endX, pullback);
-  const earthY = mix(startY, endY, pullback);
+  const earthY = mix(startY, endY, positionPullback);
 
   drawEarth(journeyContext, earthX, earthY, radius, reveal);
 
@@ -248,13 +284,15 @@ function drawStarfield(time = 0) {
   pointer.y += (pointer.targetY - pointer.y) * 0.025;
 
   for (const star of stars) {
+    const retreat = smoothstep(range(currentJourneyProgress, 0.26, 0.96));
+    const depthScale = 1 + retreat * star.depth * 0.055;
     const driftX = pointer.x * star.depth * 9;
     const driftY = pointer.y * star.depth * 7;
     const twinkle = motionQuery.matches
       ? 1
       : 0.82 + Math.sin(time * 0.00045 + star.phase) * 0.18;
-    const x = star.x * window.innerWidth + driftX;
-    const y = star.y * window.innerHeight + driftY;
+    const x = (star.x - 0.5) * window.innerWidth * depthScale + window.innerWidth * 0.5 + driftX;
+    const y = (star.y - 0.5) * window.innerHeight * depthScale + window.innerHeight * 0.5 + driftY;
 
     context.beginPath();
     context.fillStyle = `rgba(225, 236, 240, ${star.alpha * twinkle})`;
@@ -273,9 +311,9 @@ function updateScrollScene() {
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
   const copyEntrance = smoothstep(range(departureProgress, 0, 0.12));
   const copyExit = 1 - smoothstep(range(departureProgress, 0.18, 0.34));
-  const earthLabelOpacity = smoothstep(range(departureProgress, 0.3, 0.43)) *
-    (1 - smoothstep(range(departureProgress, 0.58, 0.7)));
-  const moonLabelOpacity = smoothstep(range(departureProgress, 0.78, 0.9));
+  const earthLabelOpacity = smoothstep(range(departureProgress, 0.32, 0.45)) *
+    (1 - smoothstep(range(departureProgress, 0.66, 0.76)));
+  const moonLabelOpacity = smoothstep(range(departureProgress, 0.83, 0.95));
 
   heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
   heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0) scale(${1 - heroProgress * 0.08})`;

@@ -18,6 +18,8 @@ The first V2 milestone focuses only on the site's entrance:
 
 The first scale transition now uses a sticky viewport and a procedural Canvas 2D scene. Scrolling controls the camera distance directly: Earth's atmospheric limb rises into view, the full globe recedes into space, the Moon appears, and a sparse `384,400 KM` lunar-distance marker establishes the first change in scale. Reversing the scroll reverses the entire camera move.
 
+The polished Earth rendering maps NASA Blue Marble imagery onto a Canvas 2D sphere, then adds directional daylight, a shadowed night side, and a thin atmospheric rim. The Moon uses a deterministic multi-scale surface texture with directional lighting. The sequence now spans a longer scroll distance with a slower initial departure and subtle depth-based star movement.
+
 The other exploration areas—Solar System, Stars, Black Holes, Galaxies, and Universe—are intentionally deferred until the opening experience is tested and approved.
 
 ## Run locally
@@ -50,3 +52,7 @@ The interface combines the quiet precision of a scientific observatory with cine
 - CSS
 - Vanilla JavaScript
 - Canvas 2D
+
+## Image credits
+
+- Earth texture: [Equirectangular Projected Earth for “LARGEST”](https://svs.gsfc.nasa.gov/3615), NASA/Goddard Space Flight Center Scientific Visualization Studio. Blue Marble Next Generation data courtesy of Reto Stöckli, NASA/GSFC, and NASA Earth Observatory.
