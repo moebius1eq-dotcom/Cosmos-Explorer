@@ -11,7 +11,12 @@ The first V2 milestone focuses only on the site's entrance:
 - the main **COSMOS EXPLORER** hero composition
 - a minimal scroll prompt
 - the beginning of the first scroll transition, revealing Earth and the journey's departure point
+- a reversible, scroll-controlled transition from Earth's curved limb to the full Earth–Moon system
 - responsive behavior and reduced-motion support
+
+### Earth–Moon journey milestone
+
+The first scale transition now uses a sticky viewport and a procedural Canvas 2D scene. Scrolling controls the camera distance directly: Earth's atmospheric limb rises into view, the full globe recedes into space, the Moon appears, and a sparse `384,400 KM` lunar-distance marker establishes the first change in scale. Reversing the scroll reverses the entire camera move.
 
 The other exploration areas—Solar System, Stars, Black Holes, Galaxies, and Universe—are intentionally deferred until the opening experience is tested and approved.
 
@@ -33,10 +38,11 @@ The interface combines the quiet precision of a scientific observatory with cine
 
 ## Roadmap
 
-1. Refine the V2 opening from real-device feedback.
-2. Expand the scale journey from Earth through the observable universe.
-3. Add large environmental entry points for each astronomy topic.
-4. Build reusable data-driven explorers, beginning with the Solar System.
+1. Refine the V2 opening and Earth–Moon pullback from real-device feedback.
+2. Continue the scale journey into the inner and full Solar System.
+3. Extend the journey through stellar, galactic, and observable-universe scales.
+4. Add large environmental entry points for each astronomy topic.
+5. Build reusable data-driven explorers, beginning with the Solar System.
 
 ## Built with
 
