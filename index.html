@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Cosmos Explorer is a cinematic journey through the scale and structure of the universe."
+    />
+    <meta name="theme-color" content="#030405" />
+    <title>Cosmos Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body class="is-loading">
+    <noscript>
+      <div class="noscript-message">Cosmos Explorer requires JavaScript for its motion experience.</div>
+    </noscript>
+
+    <div class="loader" aria-live="polite" aria-label="Loading Cosmos Explorer">
+      <div class="loader__content">
+        <p class="wordmark wordmark--loader" aria-label="Cosmos Explorer">
+          <span>COSMOS</span>
+          <span>EXPLORER</span>
+        </p>
+        <div class="loader__track" aria-hidden="true">
+          <span class="loader__progress"></span>
+        </div>
+        <span class="loader__status">INITIALIZING OBSERVATORY</span>
+      </div>
+    </div>
+
+    <canvas class="starfield" aria-hidden="true"></canvas>
+    <div class="space-haze" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="site-mark" href="#top" aria-label="Cosmos Explorer home">CE / 01</a>
+      <p class="site-header__status">DEEP SPACE OBSERVATORY</p>
+      <button class="menu-button" type="button" aria-label="Navigation coming in a future release" disabled>
+        INDEX
+      </button>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <p class="hero__eyebrow">AN INTERACTIVE ATLAS OF THE UNIVERSE</p>
+          <h1 class="wordmark wordmark--hero" id="hero-title">
+            <span>COSMOS</span>
+            <span>EXPLORER</span>
+          </h1>
+          <p class="hero__intro">
+            Explore the universe from worlds beside us<br />
+            to structures billions of light-years away.
+          </p>
+        </div>
+
+        <div class="hero__coordinates" aria-hidden="true">
+          <span>43° 05′ 49.2″ N</span>
+          <span>89° 30′ 16.1″ W</span>
+        </div>
+
+        <a class="scroll-cue" href="#departure">
+          <span>SCROLL TO EXPLORE</span>
+          <span class="scroll-cue__line" aria-hidden="true"></span>
+        </a>
+      </section>
+
+      <section class="departure" id="departure" aria-labelledby="departure-title">
+        <div class="departure__guide" aria-hidden="true"></div>
+        <div class="departure__copy">
+          <p class="departure__index">01 / DEPARTURE</p>
+          <h2 id="departure-title">BEGIN WITH<br />WHAT WE KNOW.</h2>
+          <p>Our journey starts close to home.</p>
+        </div>
+        <div class="earth-limb" aria-hidden="true">
+          <div class="earth-limb__atmosphere"></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
