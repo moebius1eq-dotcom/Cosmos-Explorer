@@ -31,6 +31,7 @@ let locationSyncTimer = 0;
 let pixelRatio = 1;
 let journeyPixelRatio = 1;
 let currentJourneyProgress = 0;
+let journeyObjects = [];
 let earthTexture = null;
 let moonTexture = null;
 let sunTexture = null;
@@ -151,8 +152,8 @@ function loadSurface(src, size, longitude, isEarth, assign) {
 }
 
 const surfaceReady = Promise.all([
-  loadSurface("assets/earth-blue-marble.jpg", 1536, -70, true, value => earthTexture = value),
-  loadSurface("assets/moon-lroc.jpg", 512, 0, false, value => moonTexture = value),
+  loadSurface("assets/earth-blue-marble.jpg", 2048, -70, true, value => earthTexture = value),
+  loadSurface("assets/moon-lroc.jpg", 1024, 0, false, value => moonTexture = value),
 ]);
 
 const loadingStates = [
@@ -356,6 +357,7 @@ function createSunTexture() {
 }
 
 function drawSun(context2d, x, y, radius, opacity) {
+  if (opacity > 0.5 && radius > 2) journeyObjects.push({ id: "sun", x, y, radius: Math.max(14, radius) });
   if (opacity <= 0 || radius <= 0) return;
   context2d.save();
   context2d.globalAlpha = opacity;
@@ -664,6 +666,8 @@ function drawObservableUniverse(context2d, x, y, radius, opacity) {
 }
 
 function drawJourney(progress) {
+  journeyObjects = [];
+  if (progress > 0.76) journeyObjects.push({ id: progress > 0.9 ? "universe" : "cosmic-web", x: innerWidth / 2, y: innerHeight / 2, radius: Math.min(innerWidth, innerHeight) * 0.35 });
   const width = window.innerWidth;
   const height = window.innerHeight;
   const webProgress = clamp(progress / 0.84);
@@ -717,12 +721,14 @@ function drawJourney(progress) {
   const displayedEarthRadius = mix(radius, solarEarthRadius, solarPullback);
 
   drawEarth(journeyContext, earthX, earthY, displayedEarthRadius, reveal);
+  if (reveal > 0.5 && displayedEarthRadius > 1) journeyObjects.push({ id: "earth", x: earthX, y: earthY, radius: Math.max(14, displayedEarthRadius) });
 
   const separation = width * (mobile ? 0.52 : 0.34) / finalRadius;
   const moonX = earthX + displayedEarthRadius * separation * (1 - solarPullback);
   const moonY = earthY - displayedEarthRadius * (mobile ? 1.7 : 0.95) * (1 - solarPullback);
   const moonReveal = smoothstep(range(earthProgress, 0.58, 0.72)) * (1 - solarPullback);
   drawMoon(journeyContext, moonX, moonY, displayedEarthRadius * 0.2727, moonReveal);
+  if (moonReveal > 0.5) journeyObjects.push({ id: "moon", x: moonX, y: moonY, radius: Math.max(14, displayedEarthRadius * 0.2727) });
 
   if (moonReveal > 0.05) {
     journeyContext.save();
@@ -757,6 +763,7 @@ function drawJourney(progress) {
     if (orbit.color !== "#75a9bf") {
       drawPlanet(journeyContext, planet.x, planet.y, orbit.radius * bodyScale, orbit.color, systemReveal * galaxyScale);
     }
+    if (innerNameOpacity * systemReveal > 0.3) journeyObjects.push({ id: orbit.name.toLowerCase(), x: planet.x, y: planet.y, radius: 14 });
     const labelOnLeft = orbit.name === "MERCURY";
     drawStarName(
       journeyContext,
@@ -806,6 +813,7 @@ function drawJourney(progress) {
     } else {
       drawPlanet(journeyContext, planet.x, planet.y, orbit.radius * bodyScale, orbit.color, outerReveal * galaxyScale);
     }
+    if (outerNameOpacity * outerReveal > 0.3) journeyObjects.push({ id: orbit.name.toLowerCase(), x: planet.x, y: planet.y, radius: 16 });
     drawStarName(journeyContext, orbit.name, planet.x + 10, planet.y - 9, outerNameOpacity * outerReveal);
   }
 
@@ -890,6 +898,7 @@ function drawJourney(progress) {
   const galaxyX = mix(mix(width * (mobile ? 0.5 : 0.54), width * (mobile ? 0.29 : 0.34), groupPullback), groupPointX, webPullback);
   const galaxyY = mix(mix(height * 0.52, height * (mobile ? 0.58 : 0.6), groupPullback), groupPointY, webPullback);
   drawMilkyWay(journeyContext, galaxyX, galaxyY, galaxyRadius, galacticReveal);
+  if (galacticReveal > 0.5 && galaxyRadius > 15) journeyObjects.push({ id: "milky-way", x: galaxyX, y: galaxyY, radius: galaxyRadius });
 
   const localMarkerX = galaxyX + galaxyRadius * (mobile ? 0.38 : 0.42);
   const localMarkerY = galaxyY + galaxyRadius * 0.04;
@@ -919,6 +928,7 @@ function drawJourney(progress) {
   const andromedaX = mix(width * (mobile ? 0.68 : 0.7), groupPointX, webPullback);
   const andromedaY = mix(height * (mobile ? 0.39 : 0.4), groupPointY, webPullback);
   const andromedaRadius = Math.min(width, height) * (mobile ? 0.13 : 0.16) * groupScale;
+  if (groupReveal > 0.5 && andromedaRadius > 15) journeyObjects.push({ id: "andromeda", x: andromedaX, y: andromedaY, radius: andromedaRadius });
   drawMilkyWay(journeyContext, andromedaX, andromedaY, andromedaRadius, groupReveal * 0.9, 0.26, 0.3);
   drawStarName(journeyContext, "M31 · ANDROMEDA", andromedaX + andromedaRadius * 0.45, andromedaY - andromedaRadius * 0.18, groupReveal * (1 - webPullback));
 
@@ -1169,3 +1179,15 @@ resizeJourneyCanvas();
 updateScrollScene();
 animationFrame = requestAnimationFrame(drawStarfield);
 initializeLoadingSequence();
+
+function objectAtPointer(event) {
+  const bounds = journeyCanvas.getBoundingClientRect();
+  return journeyObjects.filter(object => Math.hypot(event.clientX - bounds.left - object.x, event.clientY - bounds.top - object.y) < object.radius)
+    .sort((a, b) => a.radius - b.radius)[0];
+}
+journeyViewport.addEventListener('pointermove', event => { journeyViewport.style.cursor = objectAtPointer(event) ? 'pointer' : ''; });
+journeyViewport.addEventListener('click', event => {
+  if (event.target.closest('a, button')) return;
+  const object = objectAtPointer(event);
+  if (object) location.href = (['milky-way','andromeda','cosmic-web','universe'].includes(object.id) ? 'deep-space.html#' : 'planets.html#') + object.id;
+});

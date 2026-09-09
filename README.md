@@ -19,7 +19,7 @@ The site is one continuous, reversible camera journey across eight observation s
 7. Cosmic web and Laniākea
 8. Observable universe
 
-Scrolling controls scale, position, and opacity directly. Earth begins as a curved limb, resolves into a full globe, recedes beside the Moon, and then becomes one orbit around the Sun. Each previously enormous structure contracts before the next scale appears. Scrolling upward reverses the same camera path without a section cut.
+Mouse-wheel impulses now advance a damped scroll target, so the camera continues moving between wheel notches and settles gently. Reversing the wheel cancels previous momentum; keyboard, touch, navigation and reduced-motion scrolling remain native. Scrolling controls scale, position, and opacity. Earth begins as a curved limb, resolves into a full globe, recedes beside the Moon, and then becomes one orbit around the Sun. Each previously enormous structure contracts before the next scale appears. Scrolling upward reverses the same camera path without a section cut.
 
 The Earth-system index stop holds both bodies in frame with the `384,400 KM` mean lunar-distance marker. The end-state return action resolves to this same frame, so its URL, reload state, and visible destination remain consistent.
 
@@ -85,4 +85,17 @@ The interface combines the quiet precision of a scientific observatory with cine
 ## Image credits
 
 - Earth texture: [Equirectangular Projected Earth for “LARGEST”](https://svs.gsfc.nasa.gov/3615), NASA/Goddard Space Flight Center Scientific Visualization Studio. Blue Marble Next Generation data courtesy of Reto Stöckli, NASA/GSFC, and NASA Earth Observatory.
-- Moon texture: [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/), NASA Scientific Visualization Studio, Ernie Wright; LRO/LROC data. The local `moon-lroc.jpg` is the original `lroc_color_poles_1k.jpg` visualization map.
+- Moon texture: [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/), NASA Scientific Visualization Studio, Ernie Wright; LRO/LROC data. The local `moon-lroc.jpg` is a quality-93 JPEG conversion of the 4096×2048 `lroc_color_poles_4k.tif` map.
+
+
+## Object atlas and sharper surfaces
+
+The top navigation connects three actual pages: Journey, Planets and Deep Space. The Planets page gives the Sun, all eight planets, the Moon and Pluto their own persistent close-up. Choose an object by name or with Previous/Next; click its image for a keyboard-accessible facts dialog. Deep Space covers the Milky Way, Andromeda, cosmic web and observable universe. Object URLs preserve the selected object, including browser Back/Forward.
+
+Visible Earth, Moon, Sun, labeled planets and the major galaxies in the journey link to their atlas entries. Tiny planets receive expanded click targets. Keyboard users can reach every object through the Planets/Deep Space navigation. Pluto is presented as a dwarf planet in the atlas rather than adding a misleading ninth planetary orbit to the existing journey.
+
+Earth now uses the 8192×4096 NASA source from the existing SVS attribution above; its cached globe is 2048 pixels across, with a 4096-pixel source sampling limit. The Moon uses a 4096×2048 source and 1024-pixel globe. Atlas Earth/Moon PNGs are cached projections of those same textures. The extreme opening limb still magnifies a finite image; these are globe maps, not surface-level terrain.
+
+Other planet close-ups are locally stored NASA mission images; exact image URLs and reference pages are in `assets/atlas-sources.json`. Images retain their mission processing and are not to a shared scale. The Sun and deep-space atlas visuals are explicitly schematic. Physical values are approximate; planetary parameters follow [NASA/JPL physical parameters](https://ssd.jpl.nasa.gov/planets/phys_par.html). Gravity for giant planets uses a reference atmospheric level. Mass is used instead of weight because weight depends on the local gravitational field.
+
+New files: `planets.html`, `deep-space.html`, `atlas.css`, `atlas.js`, `objects.json`, and `momentum.js`. The site still needs no framework, dependency installation or build step.

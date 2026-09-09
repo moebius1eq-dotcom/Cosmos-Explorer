@@ -928,3 +928,9 @@ body.index-open {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Shared page navigation */
+.primary-nav { display:flex; gap:clamp(14px,3vw,36px); align-items:center; }
+.primary-nav a { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:8px 0; white-space:nowrap; }
+.primary-nav a[aria-current] { color:var(--white); border-bottom:1px solid var(--accent); }
+@media(max-width:700px) { .site-header { grid-template-columns:auto 1fr auto; gap:18px; } .primary-nav { justify-content:center; gap:14px; } .primary-nav a { font-size:9px; letter-spacing:.03em; } }

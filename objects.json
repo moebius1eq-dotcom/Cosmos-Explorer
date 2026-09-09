@@ -1,0 +1,202 @@
+[
+  {
+    "id": "sun",
+    "name": "Sun",
+    "kind": "Star",
+    "description": "The star at the center of our system. Fusion in its core supplies the light and heat that reach every planet.",
+    "source": "https://science.nasa.gov/sun/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "1,392,700 km",
+      "Mass (approx.)": "1.989 × 10³⁰ kg",
+      "Gravity (reference level)": "274 m/s²"
+    },
+    "image": null
+  },
+  {
+    "id": "mercury",
+    "name": "Mercury",
+    "kind": "Terrestrial planet",
+    "description": "A heavily cratered world closest to the Sun, with almost no atmosphere to retain heat.",
+    "source": "https://science.nasa.gov/mercury/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "4,881 km",
+      "Mass (approx.)": "3.301 × 10²³ kg",
+      "Gravity (reference level)": "3.7 m/s²"
+    },
+    "image": "assets/atlas-mercury.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "venus",
+    "name": "Venus",
+    "kind": "Terrestrial planet",
+    "description": "Thick clouds conceal a rocky surface beneath an atmosphere dominated by carbon dioxide.",
+    "source": "https://science.nasa.gov/venus/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "12,104 km",
+      "Mass (approx.)": "4.867 × 10²⁴ kg",
+      "Gravity (reference level)": "8.87 m/s²"
+    },
+    "image": "assets/atlas-venus.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "earth",
+    "name": "Earth",
+    "kind": "Terrestrial planet",
+    "description": "Liquid oceans, moving continents and a thin atmosphere make this our only known living world.",
+    "source": "https://science.nasa.gov/earth/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "12,756 km",
+      "Mass (approx.)": "5.972 × 10²⁴ kg",
+      "Gravity (reference level)": "9.80 m/s²"
+    },
+    "image": null,
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "moon",
+    "name": "Moon",
+    "kind": "Natural satellite",
+    "description": "Ancient impact basins and dark volcanic plains preserve a record of the early Solar System.",
+    "source": "https://science.nasa.gov/moon/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "3,475 km",
+      "Mass (approx.)": "7.342 × 10²² kg",
+      "Gravity (reference level)": "1.62 m/s²"
+    },
+    "image": null
+  },
+  {
+    "id": "mars",
+    "name": "Mars",
+    "kind": "Terrestrial planet",
+    "description": "A cold desert with enormous volcanoes, polar ice and evidence of ancient flowing water.",
+    "source": "https://science.nasa.gov/mars/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "6,792 km",
+      "Mass (approx.)": "6.417 × 10²³ kg",
+      "Gravity (reference level)": "3.71 m/s²"
+    },
+    "image": "assets/atlas-mars.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "jupiter",
+    "name": "Jupiter",
+    "kind": "Gas giant",
+    "description": "The largest planet. Turbulent cloud bands and long-lived storms circle its hydrogen-rich atmosphere.",
+    "source": "https://science.nasa.gov/jupiter/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "142,984 km",
+      "Mass (approx.)": "1.898 × 10²⁷ kg",
+      "Gravity (reference level)": "24.79 m/s²"
+    },
+    "image": "assets/atlas-jupiter.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "saturn",
+    "name": "Saturn",
+    "kind": "Gas giant",
+    "description": "An immense world encircled by rings made mostly of countless pieces of water ice.",
+    "source": "https://science.nasa.gov/saturn/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "120,536 km",
+      "Mass (approx.)": "5.683 × 10²⁶ kg",
+      "Gravity (reference level)": "10.44 m/s²"
+    },
+    "image": "assets/atlas-saturn.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "uranus",
+    "name": "Uranus",
+    "kind": "Ice giant",
+    "description": "This pale blue-green world rotates almost on its side, giving it extreme seasons.",
+    "source": "https://science.nasa.gov/uranus/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "51,118 km",
+      "Mass (approx.)": "8.681 × 10²⁵ kg",
+      "Gravity (reference level)": "8.87 m/s²"
+    },
+    "image": "assets/atlas-uranus.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "neptune",
+    "name": "Neptune",
+    "kind": "Ice giant",
+    "description": "The most distant planet, with powerful winds in a cold atmosphere containing methane.",
+    "source": "https://science.nasa.gov/neptune/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "49,528 km",
+      "Mass (approx.)": "1.024 × 10²⁶ kg",
+      "Gravity (reference level)": "11.15 m/s²"
+    },
+    "image": "assets/atlas-neptune.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "pluto",
+    "name": "Pluto",
+    "kind": "Dwarf planet",
+    "description": "An icy Kuiper Belt world with mountains of water ice and a vast nitrogen-ice plain.",
+    "source": "https://science.nasa.gov/dwarf-planets/pluto/facts/",
+    "facts": {
+      "Equatorial diameter (approx.)": "2,377 km",
+      "Mass (approx.)": "1.302 × 10²² kg",
+      "Gravity (reference level)": "0.62 m/s²"
+    },
+    "image": "assets/atlas-pluto.jpg",
+    "physicalSource": "https://ssd.jpl.nasa.gov/planets/phys_par.html"
+  },
+  {
+    "id": "milky-way",
+    "name": "Milky Way",
+    "kind": "Barred spiral galaxy",
+    "description": "Our Solar System occupies a small part of a spiral arm in this enormous collection of stars, gas and dust.",
+    "facts": {
+      "Diameter": "≈ 100,000 light-years",
+      "Our location": "Orion Spur"
+    },
+    "source": "https://science.nasa.gov/universe/galaxies/",
+    "image": null
+  },
+  {
+    "id": "andromeda",
+    "name": "Andromeda",
+    "kind": "Spiral galaxy",
+    "description": "The nearest large spiral galaxy to the Milky Way, seen across millions of light-years.",
+    "facts": {
+      "Distance from Earth": "≈ 2.5 million light-years",
+      "Catalog name": "M31"
+    },
+    "source": "https://science.nasa.gov/universe/galaxies/",
+    "image": null
+  },
+  {
+    "id": "cosmic-web",
+    "name": "Cosmic web",
+    "kind": "Large-scale structure",
+    "description": "Galaxies collect along enormous filaments around comparatively empty voids.",
+    "facts": {
+      "Structure": "Filaments and voids",
+      "Constituents": "Galaxies, gas, dark matter"
+    },
+    "source": "https://science.nasa.gov/universe/overview/",
+    "image": null
+  },
+  {
+    "id": "universe",
+    "name": "Observable universe",
+    "kind": "Observable region",
+    "description": "The region whose light has had time to reach us. Its horizon is an observational limit, not a physical wall.",
+    "facts": {
+      "Diameter today": "≈ 93 billion light-years",
+      "Cosmic age": "≈ 13.8 billion years"
+    },
+    "source": "https://science.nasa.gov/universe/overview/",
+    "image": null
+  }
+]
