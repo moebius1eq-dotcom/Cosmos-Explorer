@@ -739,11 +739,13 @@ function drawJourney(progress) {
   }
 
   const outerOrbitScale = mix(0.86, 1, outerReveal) * stellarSystemScale;
+  const outerNameOpacity = smoothstep(range(solarProgress, 0.9, 0.98)) *
+    (1 - smoothstep(range(stellarProgress, 0.74, 0.84)));
   const outerOrbits = [
-    { x: mobile ? 0.18 : 0.17, y: 0.085, angle: 3.62, radius: mobile ? 3.7 : 5.8, color: "#b99372", kind: "planet" },
-    { x: mobile ? 0.27 : 0.26, y: 0.13, angle: 1.82, radius: mobile ? 3.3 : 5.1, color: "#c3ab79", kind: "saturn" },
-    { x: mobile ? 0.36 : 0.35, y: 0.18, angle: 4.58, radius: mobile ? 2.3 : 3.2, color: "#83b9bd", kind: "planet" },
-    { x: mobile ? 0.45 : 0.44, y: 0.235, angle: 5.72, radius: mobile ? 2.2 : 3.1, color: "#527cae", kind: "planet" },
+    { name: "JUPITER", x: mobile ? 0.18 : 0.17, y: 0.085, angle: 3.62, radius: mobile ? 3.7 : 5.8, color: "#b99372", kind: "planet" },
+    { name: "SATURN", x: mobile ? 0.27 : 0.26, y: 0.13, angle: 1.82, radius: mobile ? 3.3 : 5.1, color: "#c3ab79", kind: "saturn" },
+    { name: "URANUS", x: mobile ? 0.36 : 0.35, y: 0.18, angle: 4.58, radius: mobile ? 2.3 : 3.2, color: "#83b9bd", kind: "planet" },
+    { name: "NEPTUNE", x: mobile ? 0.45 : 0.44, y: 0.235, angle: 5.72, radius: mobile ? 2.2 : 3.1, color: "#527cae", kind: "planet" },
   ];
 
   for (const orbit of outerOrbits) {
@@ -756,6 +758,7 @@ function drawJourney(progress) {
     } else {
       drawPlanet(journeyContext, planet.x, planet.y, orbit.radius * bodyScale, orbit.color, outerReveal * galaxyScale);
     }
+    drawStarName(journeyContext, orbit.name, planet.x + 10, planet.y - 9, outerNameOpacity * outerReveal);
   }
 
   drawSun(

@@ -25,6 +25,8 @@ Earth uses NASA Blue Marble imagery with inverse spherical projection, direction
 
 The 72-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
 
+The full Solar System hold identifies Jupiter, Saturn, Uranus, and Neptune directly beside their plotted positions. These labels fade before the stellar-neighborhood transition so the wider journey retains its sparse visual rhythm.
+
 ## Navigation and access
 
 The header index jumps to any scale without creating a separate scene. Every destination has a shareable URL fragment and works with browser Back and Forward controls. Manual scrolling updates the current fragment after movement settles. The final frame includes a `RETURN TO EARTH` action that closes the journey into a loop.
