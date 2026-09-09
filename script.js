@@ -838,6 +838,39 @@ function drawJourney(progress) {
   drawStarName(journeyContext, "SUN", solarCenterX - 10, solarCenterY + 17, starNameOpacity, "right");
   drawStarName(journeyContext, "α CENTAURI", alphaAX + 14, alphaAY - 11, starNameOpacity);
 
+  const neighborhoodStars = [
+    {
+      name: "BARNARD'S STAR",
+      x: width * (mobile ? 0.23 : 0.27),
+      y: height * (mobile ? 0.71 : 0.73),
+      radius: mobile ? 1.05 : 1.35,
+      color: "rgba(202, 104, 76, 0.86)",
+      align: "right",
+    },
+    {
+      name: "SIRIUS",
+      x: width * (mobile ? 0.77 : 0.82),
+      y: height * (mobile ? 0.28 : 0.25),
+      radius: mobile ? 1.3 : 1.7,
+      color: "rgba(190, 220, 235, 0.94)",
+      align: "left",
+    },
+  ];
+
+  for (const star of neighborhoodStars) {
+    const starX = mix(star.x, neighborhoodCenterX, galacticPullback);
+    const starY = mix(star.y, neighborhoodCenterY, galacticPullback);
+    drawDistantStar(journeyContext, starX, starY, star.radius, star.color, stellarReveal * neighborhoodOpacity);
+    drawStarName(
+      journeyContext,
+      star.name,
+      starX + (star.align === "right" ? -10 : 10),
+      starY - 9,
+      starNameOpacity,
+      star.align,
+    );
+  }
+
   journeyContext.save();
   journeyContext.globalAlpha = stellarReveal * neighborhoodOpacity * 0.24;
   journeyContext.strokeStyle = "rgba(221, 228, 225, 0.38)";

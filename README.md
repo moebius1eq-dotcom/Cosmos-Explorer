@@ -25,6 +25,8 @@ The Earth-system index stop holds both bodies in frame with the `384,400 KM` mea
 
 Earth uses NASA Blue Marble imagery with inverse spherical projection, directional light, a curved terminator, and a thin atmospheric rim. The Moon uses NASA LROC imagery under the same light direction. The later stages use cached procedural renderings for the Sun, orbital systems, stellar neighborhood, spiral galaxies, cosmic web, and observable horizon.
 
+The stellar-neighborhood hold places the Sun and Alpha Centauri beside Proxima Centauri, Barnard's Star, and Sirius. These reference stars contract into the same point as the camera resolves the Milky Way.
+
 The 72-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
 
 The inner-system hold identifies Mercury, Venus, Earth, and Mars beside their plotted positions. The full Solar System hold then identifies Jupiter, Saturn, Uranus, and Neptune and resolves the main asteroid belt between the inner and outer planets. Each label set fades before the next scale so the wider journey retains its sparse visual rhythm.
