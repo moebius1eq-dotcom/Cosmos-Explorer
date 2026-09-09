@@ -22,7 +22,7 @@ Earth uses the existing NASA Blue Marble surface/cloud composite, inverse spheri
 
 The sequence now spans 900 viewport heights. A logarithmic scale curve keeps the opening departure slow before accelerating into the Earth-Moon system. The diameter ratio is accurate; the Earth-Moon separation is compressed for legibility, so this is a cinematic scale illustration rather than a literal distance diagram.
 
-The other exploration areas—Solar System, Stars, Black Holes, Galaxies, and Universe—are intentionally deferred until the opening experience is tested and approved.
+The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. Earth becomes an orbital point, the Sun resolves with a restrained procedural surface, and Mercury through Mars appear on compressed orbital traces with a `1 AU` distance marker. The outer Solar System and larger cosmic scales remain deferred until this transition is tested and approved.
 
 ## Run locally
 

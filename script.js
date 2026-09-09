@@ -9,6 +9,7 @@ const journeyViewport = document.querySelector(".journey-viewport");
 const journeyCanvas = document.querySelector(".journey-canvas");
 const journeyContext = journeyCanvas.getContext("2d", { alpha: true });
 const journeyProgressValue = document.querySelector(".journey-progress__value");
+const journeyProgressStage = document.querySelector(".journey-progress__stage");
 
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
@@ -19,6 +20,7 @@ let journeyPixelRatio = 1;
 let currentJourneyProgress = 0;
 let earthTexture = null;
 let moonTexture = null;
+let sunTexture = null;
 
 function loadSurface(src, size, longitude, isEarth, assign) {
   const image = new Image();
@@ -189,11 +191,127 @@ function drawMoon(context2d, x, y, radius, opacity) {
   context2d.restore();
 }
 
+function seededNoise(x, y) {
+  const value = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function interpolatedNoise(x, y, scale) {
+  const sampleX = x / scale;
+  const sampleY = y / scale;
+  const x0 = Math.floor(sampleX);
+  const y0 = Math.floor(sampleY);
+  const fx = smoothstep(sampleX - x0);
+  const fy = smoothstep(sampleY - y0);
+  return mix(
+    mix(seededNoise(x0, y0), seededNoise(x0 + 1, y0), fx),
+    mix(seededNoise(x0, y0 + 1), seededNoise(x0 + 1, y0 + 1), fx),
+    fy,
+  );
+}
+
+function createSunTexture() {
+  const size = 512;
+  const texture = document.createElement("canvas");
+  texture.width = texture.height = size;
+  const textureContext = texture.getContext("2d");
+  const imageData = textureContext.createImageData(size, size);
+
+  for (let y = 0; y < size; y++) {
+    const ny = (y + 0.5) / size * 2 - 1;
+    for (let x = 0; x < size; x++) {
+      const nx = (x + 0.5) / size * 2 - 1;
+      const distance = Math.sqrt(nx * nx + ny * ny);
+      if (distance >= 1) continue;
+      const broad = interpolatedNoise(x, y, 34);
+      const cells = interpolatedNoise(x + 71, y - 43, 8);
+      const grain = broad * 0.58 + cells * 0.42;
+      const limb = Math.pow(1 - distance * distance, 0.22);
+      const brightness = 0.72 + grain * 0.28;
+      const index = (y * size + x) * 4;
+      imageData.data[index] = 255 * brightness * limb;
+      imageData.data[index + 1] = 196 * brightness * limb;
+      imageData.data[index + 2] = 86 * brightness * limb;
+      imageData.data[index + 3] = 255 * clamp((1 - distance) * size / 2);
+    }
+  }
+  textureContext.putImageData(imageData, 0, 0);
+  return texture;
+}
+
+function drawSun(context2d, x, y, radius, opacity) {
+  if (opacity <= 0 || radius <= 0) return;
+  context2d.save();
+  context2d.globalAlpha = opacity;
+  const corona = context2d.createRadialGradient(x, y, radius * 0.72, x, y, radius * 1.85);
+  corona.addColorStop(0, "rgba(255, 241, 190, 0.22)");
+  corona.addColorStop(0.52, "rgba(222, 161, 70, 0.065)");
+  corona.addColorStop(1, "rgba(196, 112, 38, 0)");
+  context2d.fillStyle = corona;
+  context2d.beginPath();
+  context2d.arc(x, y, radius * 1.85, 0, Math.PI * 2);
+  context2d.fill();
+
+  sunTexture ||= createSunTexture();
+  context2d.drawImage(sunTexture, x - radius, y - radius, radius * 2, radius * 2);
+  const highlight = context2d.createRadialGradient(
+    x - radius * 0.24,
+    y - radius * 0.26,
+    0,
+    x,
+    y,
+    radius,
+  );
+  highlight.addColorStop(0, "rgba(255, 250, 216, 0.48)");
+  highlight.addColorStop(0.42, "rgba(255, 224, 151, 0.08)");
+  highlight.addColorStop(1, "rgba(112, 38, 16, 0.2)");
+  context2d.fillStyle = highlight;
+  context2d.beginPath();
+  context2d.arc(x, y, radius, 0, Math.PI * 2);
+  context2d.fill();
+  context2d.restore();
+}
+
+function drawOrbit(context2d, x, y, radiusX, radiusY, opacity) {
+  context2d.save();
+  context2d.globalAlpha = opacity;
+  context2d.strokeStyle = "rgba(214, 222, 219, 0.2)";
+  context2d.lineWidth = 0.75;
+  context2d.beginPath();
+  context2d.ellipse(x, y, radiusX, radiusY, -0.08, 0, Math.PI * 2);
+  context2d.stroke();
+  context2d.restore();
+}
+
+function orbitPoint(centerX, centerY, radiusX, radiusY, angle) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  return {
+    x: centerX + cos * radiusX * Math.cos(-0.08) - sin * radiusY * Math.sin(-0.08),
+    y: centerY + cos * radiusX * Math.sin(-0.08) + sin * radiusY * Math.cos(-0.08),
+  };
+}
+
+function drawPlanet(context2d, x, y, radius, color, opacity) {
+  context2d.save();
+  context2d.globalAlpha = opacity;
+  context2d.fillStyle = color;
+  context2d.shadowColor = color;
+  context2d.shadowBlur = radius * 2;
+  context2d.beginPath();
+  context2d.arc(x, y, Math.max(0.7, radius), 0, Math.PI * 2);
+  context2d.fill();
+  context2d.restore();
+}
+
 function drawJourney(progress) {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const reveal = smoothstep(range(progress, 0.02, 0.34));
-  const pullback = smoothstep(Math.pow(range(progress, 0.08, 1), 1.35));
+  const earthProgress = clamp(progress / 0.6);
+  const reveal = smoothstep(range(earthProgress, 0.02, 0.34));
+  const pullback = smoothstep(Math.pow(range(earthProgress, 0.08, 1), 1.35));
+  const solarPullback = smoothstep(range(progress, 0.58, 0.82));
+  const systemReveal = smoothstep(range(progress, 0.72, 0.92));
   const mobile = width < 700;
 
   journeyContext.clearRect(0, 0, width, height);
@@ -201,17 +319,26 @@ function drawJourney(progress) {
   const initialRadius = Math.max(width, height) * (mobile ? 0.88 : 0.72);
   const finalRadius = Math.min(width, height) * (mobile ? 0.095 : 0.085);
   const radius = initialRadius * Math.pow(finalRadius / initialRadius, pullback);
-  const framing = smoothstep(range(progress, 0.08, 0.65));
-  const earthX = mix(width * (mobile ? 0.58 : 0.66), width * (mobile ? 0.3 : 0.46), framing);
-  const earthY = mix(height + initialRadius * 0.58, height * 0.55, framing);
+  const framing = smoothstep(range(earthProgress, 0.08, 0.65));
+  const solarCenterX = width * (mobile ? 0.5 : 0.52);
+  const solarCenterY = height * 0.53;
+  const earthOrbitX = width * (mobile ? 0.39 : 0.34);
+  const earthOrbitY = height * (mobile ? 0.12 : 0.15);
+  const earthOrbit = orbitPoint(solarCenterX, solarCenterY, earthOrbitX, earthOrbitY, 0.12);
+  const earthSystemX = mix(width * (mobile ? 0.58 : 0.66), width * (mobile ? 0.3 : 0.46), framing);
+  const earthSystemY = mix(height + initialRadius * 0.58, height * 0.55, framing);
+  const earthX = mix(earthSystemX, earthOrbit.x, solarPullback);
+  const earthY = mix(earthSystemY, earthOrbit.y, solarPullback);
+  const solarEarthRadius = mobile ? 2.1 : 2.4;
+  const displayedEarthRadius = mix(radius, solarEarthRadius, solarPullback);
 
-  drawEarth(journeyContext, earthX, earthY, radius, reveal);
+  drawEarth(journeyContext, earthX, earthY, displayedEarthRadius, reveal);
 
   const separation = width * (mobile ? 0.52 : 0.34) / finalRadius;
-  const moonX = earthX + radius * separation;
-  const moonY = earthY - radius * (mobile ? 1.7 : 0.95);
-  const moonReveal = smoothstep(range(progress, 0.58, 0.72));
-  drawMoon(journeyContext, moonX, moonY, radius * 0.2727, moonReveal);
+  const moonX = earthX + displayedEarthRadius * separation * (1 - solarPullback);
+  const moonY = earthY - displayedEarthRadius * (mobile ? 1.7 : 0.95) * (1 - solarPullback);
+  const moonReveal = smoothstep(range(earthProgress, 0.58, 0.72)) * (1 - solarPullback);
+  drawMoon(journeyContext, moonX, moonY, displayedEarthRadius * 0.2727, moonReveal);
 
   if (moonReveal > 0.05) {
     journeyContext.save();
@@ -220,11 +347,38 @@ function drawJourney(progress) {
     journeyContext.lineWidth = 1;
     journeyContext.setLineDash([2, 7]);
     journeyContext.beginPath();
-    journeyContext.moveTo(earthX + radius * 1.18, earthY - radius * 0.25);
-    journeyContext.lineTo(moonX - radius * 0.42, moonY + radius * 0.08);
+    journeyContext.moveTo(earthX + displayedEarthRadius * 1.18, earthY - displayedEarthRadius * 0.25);
+    journeyContext.lineTo(moonX - displayedEarthRadius * 0.42, moonY + displayedEarthRadius * 0.08);
     journeyContext.stroke();
     journeyContext.restore();
   }
+
+  const orbitOpacity = systemReveal * 0.62;
+  const orbitScale = mix(0.86, 1, systemReveal);
+  const orbits = [
+    { x: 0.13, y: 0.055, angle: 3.85, radius: 1.05, color: "#aaa59b" },
+    { x: 0.23, y: 0.095, angle: 2.18, radius: 1.45, color: "#c5a16b" },
+    { x: mobile ? 0.39 : 0.34, y: mobile ? 0.12 : 0.15, angle: 0.12, radius: solarEarthRadius, color: "#75a9bf" },
+    { x: mobile ? 0.47 : 0.43, y: mobile ? 0.15 : 0.19, angle: 5.08, radius: 1.3, color: "#b86f50" },
+  ];
+
+  for (const orbit of orbits) {
+    const orbitX = width * orbit.x * orbitScale;
+    const orbitY = height * orbit.y * orbitScale;
+    drawOrbit(journeyContext, solarCenterX, solarCenterY, orbitX, orbitY, orbitOpacity);
+    if (orbit.color !== "#75a9bf") {
+      const planet = orbitPoint(solarCenterX, solarCenterY, orbitX, orbitY, orbit.angle);
+      drawPlanet(journeyContext, planet.x, planet.y, orbit.radius, orbit.color, systemReveal);
+    }
+  }
+
+  drawSun(
+    journeyContext,
+    solarCenterX,
+    solarCenterY,
+    mix(height * 0.025, height * (mobile ? 0.075 : 0.09), systemReveal),
+    smoothstep(range(progress, 0.64, 0.79)),
+  );
 }
 
 function drawStarfield(time = 0) {
@@ -261,9 +415,14 @@ function updateScrollScene() {
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
   const copyEntrance = smoothstep(range(departureProgress, 0, 0.12));
   const copyExit = 1 - smoothstep(range(departureProgress, 0.18, 0.34));
-  const earthLabelOpacity = smoothstep(range(departureProgress, 0.43, 0.56)) *
-    (1 - smoothstep(range(departureProgress, 0.74, 0.84)));
-  const moonLabelOpacity = smoothstep(range(departureProgress, 0.87, 0.97));
+  const earthLabelOpacity = smoothstep(range(departureProgress, 0.27, 0.36)) *
+    (1 - smoothstep(range(departureProgress, 0.48, 0.56)));
+  const moonLabelOpacity = smoothstep(range(departureProgress, 0.5, 0.57)) *
+    (1 - smoothstep(range(departureProgress, 0.62, 0.68)));
+  const solarCopyOpacity = smoothstep(range(departureProgress, 0.62, 0.69)) *
+    (1 - smoothstep(range(departureProgress, 0.74, 0.82)));
+  const sunLabelOpacity = smoothstep(range(departureProgress, 0.78, 0.88));
+  const auLabelOpacity = smoothstep(range(departureProgress, 0.86, 0.96));
 
   heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
   heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0) scale(${1 - heroProgress * 0.08})`;
@@ -272,9 +431,13 @@ function updateScrollScene() {
   journeyViewport.style.setProperty("--departure-copy-y", `${mix(3, -2, copyEntrance).toFixed(2)}rem`);
   journeyViewport.style.setProperty("--earth-label-opacity", earthLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--moon-label-opacity", moonLabelOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--solar-copy-opacity", solarCopyOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--sun-label-opacity", sunLabelOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--au-label-opacity", auLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--guide-opacity", mix(0.1, 0.32, copyEntrance).toFixed(3));
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");
+  journeyProgressStage.textContent = departureProgress < 0.68 ? "EARTH SYSTEM" : "INNER SOLAR SYSTEM";
   drawJourney(departureProgress);
   if (motionQuery.matches) drawStarfield();
 }

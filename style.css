@@ -380,7 +380,7 @@ body.is-ready .scroll-cue {
 .departure {
   position: relative;
   z-index: 2;
-  height: 900svh;
+  height: 1500svh;
   background: transparent;
 }
 
@@ -486,6 +486,42 @@ body.is-ready .scroll-cue {
   left: calc(100% + 0.75rem);
 }
 
+.solar-copy {
+  position: absolute;
+  z-index: 2;
+  top: 31%;
+  left: var(--page-padding);
+  opacity: var(--solar-copy-opacity, 0);
+  transform: translateY(calc((1 - var(--solar-copy-opacity, 0)) * 1.5rem));
+  pointer-events: none;
+}
+
+.solar-copy__title {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 6rem);
+  font-weight: 300;
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+}
+
+.scale-label--sun {
+  top: 18%;
+  right: var(--page-padding);
+  text-align: right;
+  opacity: var(--sun-label-opacity, 0);
+}
+
+.scale-label--au {
+  left: var(--page-padding);
+  bottom: 15%;
+  opacity: var(--au-label-opacity, 0);
+}
+
+.scale-label--au::before {
+  right: auto;
+  left: calc(100% + 0.75rem);
+}
+
 .scale-label__name,
 .scale-label__distance {
   color: var(--white);
@@ -558,6 +594,18 @@ body.is-ready .scroll-cue {
 
   .scale-label--moon {
     top: 17%;
+  }
+
+  .solar-copy {
+    top: 21%;
+  }
+
+  .scale-label--sun {
+    top: 13%;
+  }
+
+  .scale-label--au {
+    bottom: 12%;
   }
 }
 
