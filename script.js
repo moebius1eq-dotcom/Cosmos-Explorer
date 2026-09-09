@@ -32,6 +32,26 @@ let milkyWayTexture = null;
 let cosmicWebTexture = null;
 let observableUniverseTexture = null;
 
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+function scrollToScale(link, behavior = motionQuery.matches ? "auto" : "smooth") {
+  const viewport = Math.max(window.innerHeight, 1);
+  const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
+  const target = departure.offsetTop + journeyLength * Number(link.dataset.progress);
+  const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+  if (behavior === "auto") document.documentElement.style.scrollBehavior = "auto";
+  window.scrollTo({ top: target, behavior });
+  if (behavior === "auto") {
+    requestAnimationFrame(() => document.documentElement.style.scrollBehavior = previousScrollBehavior);
+  }
+}
+
+function restoreLocationScale(behavior = "auto") {
+  const link = scaleIndexLinks.find(candidate => candidate.hash === window.location.hash);
+  if (link) scrollToScale(link, behavior);
+  else if (!window.location.hash || window.location.hash === "#top") window.scrollTo({ top: 0, behavior });
+}
+
 function setScaleIndex(open) {
   scaleIndex.classList.toggle("is-open", open);
   scaleIndex.setAttribute("aria-hidden", String(!open));
@@ -67,13 +87,14 @@ window.addEventListener("keydown", event => {
 for (const link of scaleIndexLinks) {
   link.addEventListener("click", event => {
     event.preventDefault();
-    const viewport = Math.max(window.innerHeight, 1);
-    const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
-    const target = departure.offsetTop + journeyLength * Number(link.dataset.progress);
     setScaleIndex(false);
-    window.scrollTo({ top: target, behavior: motionQuery.matches ? "auto" : "smooth" });
+    history.pushState(null, "", link.hash);
+    scrollToScale(link);
   });
 }
+
+window.addEventListener("popstate", () => restoreLocationScale());
+window.addEventListener("load", () => restoreLocationScale("auto"), { once: true });
 
 function loadSurface(src, size, longitude, isEarth, assign) {
   const image = new Image();
