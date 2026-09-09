@@ -380,7 +380,7 @@ body.is-ready .scroll-cue {
 .departure {
   position: relative;
   z-index: 2;
-  height: 1500svh;
+  height: 2200svh;
   background: transparent;
 }
 
@@ -496,6 +496,16 @@ body.is-ready .scroll-cue {
   pointer-events: none;
 }
 
+.outer-copy {
+  position: absolute;
+  z-index: 2;
+  top: 31%;
+  left: var(--page-padding);
+  opacity: var(--outer-copy-opacity, 0);
+  transform: translateY(calc((1 - var(--outer-copy-opacity, 0)) * 1.5rem));
+  pointer-events: none;
+}
+
 .solar-copy__title {
   margin: 0;
   font-size: clamp(2.5rem, 6vw, 6rem);
@@ -520,6 +530,13 @@ body.is-ready .scroll-cue {
 .scale-label--au::before {
   right: auto;
   left: calc(100% + 0.75rem);
+}
+
+.scale-label--neptune {
+  right: var(--page-padding);
+  bottom: 15%;
+  text-align: right;
+  opacity: var(--neptune-label-opacity, 0);
 }
 
 .scale-label__name,
@@ -600,11 +617,19 @@ body.is-ready .scroll-cue {
     top: 21%;
   }
 
+  .outer-copy {
+    top: 21%;
+  }
+
   .scale-label--sun {
     top: 13%;
   }
 
   .scale-label--au {
+    bottom: 12%;
+  }
+
+  .scale-label--neptune {
     bottom: 12%;
   }
 }
