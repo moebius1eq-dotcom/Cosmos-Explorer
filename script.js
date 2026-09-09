@@ -20,12 +20,22 @@ let currentJourneyProgress = 0;
 let earthTexture = null;
 let moonTexture = null;
 
-const earthImage = new Image();
-earthImage.src = "assets/earth-blue-marble.jpg";
-earthImage.addEventListener("load", () => {
-  earthTexture = createEarthTexture(earthImage);
-  drawJourney(currentJourneyProgress);
-});
+function loadSurface(src, size, longitude, isEarth, assign) {
+  const image = new Image();
+  image.addEventListener("load", () => {
+    try {
+      assign(createSphereTexture(image, size, longitude, isEarth));
+    } catch (error) {
+      console.warn("Surface projection unavailable; use a local HTTP server.", error);
+    }
+    drawJourney(currentJourneyProgress);
+  });
+  image.addEventListener("error", () => drawJourney(currentJourneyProgress));
+  image.src = src;
+}
+
+loadSurface("assets/earth-blue-marble.jpg", 1536, -70, true, value => earthTexture = value);
+loadSurface("assets/moon-lroc.jpg", 512, 0, false, value => moonTexture = value);
 
 const loadingStates = [
   [450, "CALIBRATING OPTICS"],
@@ -87,151 +97,95 @@ function mix(start, end, amount) {
   return start + (end - start) * amount;
 }
 
-function createEarthTexture(image) {
-  const size = 1024;
+function createSphereTexture(image, size, longitude, isEarth) {
+  const source = document.createElement("canvas");
+  source.width = Math.min(image.naturalWidth, 4096);
+  source.height = Math.round(source.width / 2);
+  const sourceContext = source.getContext("2d", { willReadFrequently: true });
+  sourceContext.drawImage(image, 0, 0, source.width, source.height);
+  const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
   const texture = document.createElement("canvas");
-  const textureContext = texture.getContext("2d");
-  texture.width = size;
-  texture.height = size;
+  texture.width = texture.height = size;
+  const target = texture.getContext("2d");
+  const output = target.createImageData(size, size);
+  const centralLongitude = longitude * Math.PI / 180;
 
-  textureContext.save();
-  textureContext.beginPath();
-  textureContext.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-  textureContext.clip();
-
-  for (let row = 0; row < size; row += 1) {
-    const latitude = row / size * 2 - 1;
-    const chord = Math.sqrt(Math.max(0, 1 - latitude * latitude));
-    const destinationWidth = size * chord;
-    const sourceY = Math.floor((row / size) * image.height);
-    textureContext.drawImage(
-      image,
-      image.width * 0.04,
-      sourceY,
-      image.width * 0.5,
-      Math.max(1, image.height / size + 0.5),
-      (size - destinationWidth) / 2,
-      row,
-      destinationWidth,
-      1.4,
-    );
-  }
-
-  textureContext.restore();
-  return texture;
-}
-
-function seededNoise(x, y) {
-  const value = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
-  return value - Math.floor(value);
-}
-
-function createMoonTexture() {
-  const size = 512;
-  const texture = document.createElement("canvas");
-  texture.width = size;
-  texture.height = size;
-  const textureContext = texture.getContext("2d");
-  const imageData = textureContext.createImageData(size, size);
-
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      const normalizedX = x / size * 2 - 1;
-      const normalizedY = y / size * 2 - 1;
-      const distance = normalizedX * normalizedX + normalizedY * normalizedY;
+  for (let y = 0; y < size; y++) {
+    const ny = (y + 0.5) / size * 2 - 1;
+    for (let x = 0; x < size; x++) {
+      const nx = (x + 0.5) / size * 2 - 1;
+      const r2 = nx * nx + ny * ny;
+      if (r2 >= 1) continue;
+      const nz = Math.sqrt(1 - r2);
+      const u = ((0.5 + (Math.atan2(nx, nz) + centralLongitude) / (2 * Math.PI)) % 1 + 1) % 1;
+      const v = 0.5 + Math.asin(ny) / Math.PI;
+      const sx = u * source.width;
+      const sy = clamp(v * source.height, 0, source.height - 1);
+      const x0 = Math.floor(sx);
+      const y0 = Math.floor(sy);
+      const fx = sx - x0;
+      const fy = sy - y0;
+      const x1 = (x0 + 1) % source.width;
+      const y1 = Math.min(y0 + 1, source.height - 1);
+      const indices = [
+        (y0 * source.width + x0) * 4,
+        (y0 * source.width + x1) * 4,
+        (y1 * source.width + x0) * 4,
+        (y1 * source.width + x1) * 4,
+      ];
+      const sun = -0.68 * nx - 0.32 * ny + 0.66 * nz;
+      const illumination = 0.012 + 0.94 * Math.pow(Math.max(0, sun), 0.65);
+      const rim = isEarth ? Math.pow(1 - nz, 4) * smoothstep(range(sun, -0.1, 0.3)) : 0;
       const index = (y * size + x) * 4;
-
-      if (distance > 1) {
-        imageData.data[index + 3] = 0;
-        continue;
+      for (let channel = 0; channel < 3; channel++) {
+        const surface = mix(
+          mix(pixels[indices[0] + channel], pixels[indices[1] + channel], fx),
+          mix(pixels[indices[2] + channel], pixels[indices[3] + channel], fx),
+          fy,
+        );
+        output.data[index + channel] = surface * illumination + rim * [12, 48, 78][channel];
       }
-
-      const largeNoise = seededNoise(Math.floor(x / 18), Math.floor(y / 18));
-      const mediumNoise = seededNoise(Math.floor(x / 5), Math.floor(y / 5));
-      const fineNoise = seededNoise(x, y);
-      const surface = largeNoise * 0.48 + mediumNoise * 0.34 + fineNoise * 0.18;
-      const sphereZ = Math.sqrt(Math.max(0, 1 - distance));
-      const directional = clamp(
-        sphereZ * 0.78 - normalizedX * 0.34 - normalizedY * 0.1,
-        0.08,
-        1,
-      );
-      const edgeShade = Math.pow(sphereZ, 0.42);
-      const value = Math.round((70 + surface * 78) * directional * edgeShade);
-
-      imageData.data[index] = value;
-      imageData.data[index + 1] = value;
-      imageData.data[index + 2] = Math.min(255, value + 2);
-      imageData.data[index + 3] = 255;
+      output.data[index + 3] = 255 * clamp((1 - Math.sqrt(r2)) * size / 2);
     }
   }
-
-  textureContext.putImageData(imageData, 0, 0);
+  target.putImageData(output, 0, 0);
   return texture;
 }
 
-function drawEarth(context2d, x, y, radius, reveal) {
-  const atmosphere = context2d.createRadialGradient(x, y, radius * 0.88, x, y, radius * 1.045);
-  atmosphere.addColorStop(0.9, "rgba(98, 155, 185, 0)");
-  atmosphere.addColorStop(0.982, `rgba(111, 183, 220, ${0.1 + reveal * 0.1})`);
-  atmosphere.addColorStop(1, "rgba(124, 190, 220, 0)");
+function drawEarth(context2d, x, y, radius) {
+  const atmosphere = context2d.createRadialGradient(x, y, radius * 0.997, x, y, radius * 1.012);
+  atmosphere.addColorStop(0, "rgba(95, 166, 213, 0.24)");
+  atmosphere.addColorStop(0.3, "rgba(65, 131, 184, 0.1)");
+  atmosphere.addColorStop(1, "rgba(65, 131, 184, 0)");
   context2d.fillStyle = atmosphere;
   context2d.beginPath();
-  context2d.arc(x, y, radius * 1.1, 0, Math.PI * 2);
+  context2d.arc(x, y, radius * 1.012, 0, Math.PI * 2);
   context2d.fill();
-
-  context2d.save();
-  context2d.beginPath();
-  context2d.arc(x, y, radius, 0, Math.PI * 2);
-  context2d.clip();
-
   if (earthTexture) {
     context2d.drawImage(earthTexture, x - radius, y - radius, radius * 2, radius * 2);
   } else {
-    context2d.fillStyle = "#102a36";
-    context2d.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    drawFallbackSphere(context2d, x, y, radius, "#153440");
   }
+}
 
-  const daylight = context2d.createRadialGradient(
-    x - radius * 0.38,
-    y - radius * 0.42,
-    radius * 0.05,
-    x,
-    y,
-    radius * 1.18,
-  );
-  daylight.addColorStop(0, "rgba(215, 233, 236, 0.2)");
-  daylight.addColorStop(0.44, "rgba(56, 94, 111, 0.06)");
-  daylight.addColorStop(1, "rgba(0, 0, 0, 0.42)");
-  context2d.fillStyle = daylight;
-  context2d.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-
-  const night = context2d.createLinearGradient(x - radius, y, x + radius, y);
-  night.addColorStop(0, "rgba(0, 0, 0, 0)");
-  night.addColorStop(0.36, "rgba(0, 0, 0, 0.02)");
-  night.addColorStop(0.7, "rgba(0, 0, 0, 0.72)");
-  night.addColorStop(1, "rgba(0, 0, 0, 0.98)");
-  context2d.fillStyle = night;
-  context2d.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-  context2d.restore();
-
-  context2d.strokeStyle = `rgba(145, 209, 237, ${0.28 + reveal * 0.16})`;
-  context2d.lineWidth = Math.max(0.7, Math.min(1.8, radius * 0.0022));
+function drawFallbackSphere(context2d, x, y, radius, color) {
+  const shade = context2d.createRadialGradient(x - radius * 0.4, y - radius * 0.4, 0, x, y, radius);
+  shade.addColorStop(0, color);
+  shade.addColorStop(1, "#010203");
+  context2d.fillStyle = shade;
   context2d.beginPath();
-  context2d.arc(x, y, radius + context2d.lineWidth, Math.PI * 1.03, Math.PI * 1.72);
-  context2d.stroke();
+  context2d.arc(x, y, radius, 0, Math.PI * 2);
+  context2d.fill();
 }
 
 function drawMoon(context2d, x, y, radius, opacity) {
   context2d.save();
   context2d.globalAlpha = opacity;
-  moonTexture ||= createMoonTexture();
-  context2d.drawImage(moonTexture, x - radius, y - radius, radius * 2, radius * 2);
-  context2d.strokeStyle = "rgba(215, 220, 216, 0.13)";
-  context2d.lineWidth = Math.max(0.5, radius * 0.008);
-  context2d.beginPath();
-  context2d.arc(x, y, radius, Math.PI * 0.75, Math.PI * 1.72);
-  context2d.stroke();
+  if (moonTexture) {
+    context2d.drawImage(moonTexture, x - radius, y - radius, radius * 2, radius * 2);
+  } else {
+    drawFallbackSphere(context2d, x, y, radius, "#737370");
+  }
   context2d.restore();
 }
 
@@ -239,28 +193,24 @@ function drawJourney(progress) {
   const width = window.innerWidth;
   const height = window.innerHeight;
   const reveal = smoothstep(range(progress, 0.02, 0.34));
-  const linearPullback = smoothstep(range(progress, 0.24, 0.94));
-  const pullback = Math.pow(linearPullback, 1.65);
-  const positionPullback = Math.pow(linearPullback, 0.7);
-  const moonReveal = smoothstep(range(progress, 0.8, 0.95));
+  const pullback = smoothstep(Math.pow(range(progress, 0.08, 1), 1.35));
   const mobile = width < 700;
 
   journeyContext.clearRect(0, 0, width, height);
 
   const initialRadius = Math.max(width, height) * (mobile ? 0.88 : 0.72);
-  const finalRadius = Math.min(width, height) * (mobile ? 0.15 : 0.13);
-  const radius = mix(initialRadius, finalRadius, pullback);
-  const startX = width * (mobile ? 0.58 : 0.66);
-  const startY = height + initialRadius * 0.58;
-  const endX = width * (mobile ? 0.38 : 0.57);
-  const endY = height * (mobile ? 0.53 : 0.44);
-  const earthX = mix(startX, endX, pullback);
-  const earthY = mix(startY, endY, positionPullback);
+  const finalRadius = Math.min(width, height) * (mobile ? 0.095 : 0.085);
+  const radius = initialRadius * Math.pow(finalRadius / initialRadius, pullback);
+  const framing = smoothstep(range(progress, 0.08, 0.65));
+  const earthX = mix(width * (mobile ? 0.58 : 0.66), width * (mobile ? 0.3 : 0.46), framing);
+  const earthY = mix(height + initialRadius * 0.58, height * 0.55, framing);
 
   drawEarth(journeyContext, earthX, earthY, radius, reveal);
 
-  const moonX = width * (mobile ? 0.79 : 0.82);
-  const moonY = height * (mobile ? 0.33 : 0.35);
+  const separation = width * (mobile ? 0.52 : 0.34) / finalRadius;
+  const moonX = earthX + radius * separation;
+  const moonY = earthY - radius * (mobile ? 1.7 : 0.95);
+  const moonReveal = smoothstep(range(progress, 0.58, 0.72));
   drawMoon(journeyContext, moonX, moonY, radius * 0.2727, moonReveal);
 
   if (moonReveal > 0.05) {
@@ -286,8 +236,8 @@ function drawStarfield(time = 0) {
   for (const star of stars) {
     const retreat = smoothstep(range(currentJourneyProgress, 0.26, 0.96));
     const depthScale = 1 + retreat * star.depth * 0.055;
-    const driftX = pointer.x * star.depth * 9;
-    const driftY = pointer.y * star.depth * 7;
+    const driftX = (motionQuery.matches ? 0 : pointer.x) * star.depth * 9;
+    const driftY = (motionQuery.matches ? 0 : pointer.y) * star.depth * 7;
     const twinkle = motionQuery.matches
       ? 1
       : 0.82 + Math.sin(time * 0.00045 + star.phase) * 0.18;
@@ -300,7 +250,7 @@ function drawStarfield(time = 0) {
     context.fill();
   }
 
-  animationFrame = requestAnimationFrame(drawStarfield);
+  if (!motionQuery.matches) animationFrame = requestAnimationFrame(drawStarfield);
 }
 
 function updateScrollScene() {
@@ -311,9 +261,9 @@ function updateScrollScene() {
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
   const copyEntrance = smoothstep(range(departureProgress, 0, 0.12));
   const copyExit = 1 - smoothstep(range(departureProgress, 0.18, 0.34));
-  const earthLabelOpacity = smoothstep(range(departureProgress, 0.32, 0.45)) *
-    (1 - smoothstep(range(departureProgress, 0.66, 0.76)));
-  const moonLabelOpacity = smoothstep(range(departureProgress, 0.83, 0.95));
+  const earthLabelOpacity = smoothstep(range(departureProgress, 0.43, 0.56)) *
+    (1 - smoothstep(range(departureProgress, 0.74, 0.84)));
+  const moonLabelOpacity = smoothstep(range(departureProgress, 0.87, 0.97));
 
   heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
   heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0) scale(${1 - heroProgress * 0.08})`;
@@ -326,6 +276,7 @@ function updateScrollScene() {
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");
   drawJourney(departureProgress);
+  if (motionQuery.matches) drawStarfield();
 }
 
 function completeLoadingSequence() {
@@ -364,8 +315,14 @@ window.addEventListener("pointermove", (event) => {
 window.addEventListener("resize", () => {
   resizeStarfield();
   resizeJourneyCanvas();
+  updateScrollScene();
 }, { passive: true });
 window.addEventListener("scroll", updateScrollScene, { passive: true });
+
+motionQuery.addEventListener("change", () => {
+  cancelAnimationFrame(animationFrame);
+  drawStarfield();
+});
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {

@@ -18,13 +18,17 @@ The first V2 milestone focuses only on the site's entrance:
 
 The first scale transition now uses a sticky viewport and a procedural Canvas 2D scene. Scrolling controls the camera distance directly: Earth's atmospheric limb rises into view, the full globe recedes into space, the Moon appears, and a sparse `384,400 KM` lunar-distance marker establishes the first change in scale. Reversing the scroll reverses the entire camera move.
 
-The polished Earth rendering maps NASA Blue Marble imagery onto a Canvas 2D sphere, then adds directional daylight, a shadowed night side, and a thin atmospheric rim. The Moon uses a deterministic multi-scale surface texture with directional lighting. The sequence now spans a longer scroll distance with a slower initial departure and subtle depth-based star movement.
+Earth uses the existing NASA Blue Marble surface/cloud composite, inverse spherical projection, a curved day/night terminator, and a thin atmospheric rim. The Moon uses NASA's LROC surface mosaic and the same directional sunlight. Both projected spheres are cached once after their images load, so scrolling only moves and scales them.
+
+The sequence now spans 900 viewport heights. A logarithmic scale curve keeps the opening departure slow before accelerating into the Earth-Moon system. The diameter ratio is accurate; the Earth-Moon separation is compressed for legibility, so this is a cinematic scale illustration rather than a literal distance diagram.
 
 The other exploration areas—Solar System, Stars, Black Holes, Galaxies, and Universe—are intentionally deferred until the opening experience is tested and approved.
 
 ## Run locally
 
-No packages or build tools are required. Open `index.html` directly, or serve the folder with any simple local web server.
+No packages or build tools are required. Open this cloned repository in VS Code and serve it with Live Server, or run `python -m http.server 8000` and open `http://localhost:8000`.
+
+Use a local HTTP server instead of opening `index.html` directly. Browser security can block the image pixel reads needed for spherical projection on `file://` URLs. If a texture fails, a shaded fallback sphere keeps the journey usable.
 
 ## Project structure
 
@@ -56,3 +60,4 @@ The interface combines the quiet precision of a scientific observatory with cine
 ## Image credits
 
 - Earth texture: [Equirectangular Projected Earth for “LARGEST”](https://svs.gsfc.nasa.gov/3615), NASA/Goddard Space Flight Center Scientific Visualization Studio. Blue Marble Next Generation data courtesy of Reto Stöckli, NASA/GSFC, and NASA Earth Observatory.
+- Moon texture: [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/), NASA Scientific Visualization Studio, Ernie Wright; LRO/LROC data. The local `moon-lroc.jpg` is the original `lroc_color_poles_1k.jpg` visualization map.
