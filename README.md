@@ -21,6 +21,8 @@ The site is one continuous, reversible camera journey across eight observation s
 
 Scrolling controls scale, position, and opacity directly. Earth begins as a curved limb, resolves into a full globe, recedes beside the Moon, and then becomes one orbit around the Sun. Each previously enormous structure contracts before the next scale appears. Scrolling upward reverses the same camera path without a section cut.
 
+The Earth-system index stop holds both bodies in frame with the `384,400 KM` mean lunar-distance marker. The end-state return action resolves to this same frame, so its URL, reload state, and visible destination remain consistent.
+
 Earth uses NASA Blue Marble imagery with inverse spherical projection, directional light, a curved terminator, and a thin atmospheric rim. The Moon uses NASA LROC imagery under the same light direction. The later stages use cached procedural renderings for the Sun, orbital systems, stellar neighborhood, spiral galaxies, cosmic web, and observable horizon.
 
 The 72-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
