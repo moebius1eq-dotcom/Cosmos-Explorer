@@ -30,6 +30,8 @@ A semantic outline carries the same measurements and scale relationships for ass
 
 Canvas updates are synchronized to display frames during scrolling and resizing. The background stars use deterministic positions, so changing viewport size or device orientation does not regenerate the sky, and animation pauses while the page is hidden.
 
+The Earth and Moon maps are preloaded from the document head. On a first visit, the observatory loader coordinates its minimum cinematic duration with surface projection, avoiding an untextured flash on slower devices while retaining a bounded fallback if either image is unavailable.
+
 ## Run locally
 
 No packages or build tools are required. Open this cloned repository in VS Code and serve it with Live Server, or run `python -m http.server 8000` and open `http://localhost:8000`.

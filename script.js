@@ -97,21 +97,29 @@ window.addEventListener("popstate", () => restoreLocationScale());
 window.addEventListener("load", () => restoreLocationScale("auto"), { once: true });
 
 function loadSurface(src, size, longitude, isEarth, assign) {
-  const image = new Image();
-  image.addEventListener("load", () => {
-    try {
-      assign(createSphereTexture(image, size, longitude, isEarth));
-    } catch (error) {
-      console.warn("Surface projection unavailable; use a local HTTP server.", error);
-    }
-    drawJourney(currentJourneyProgress);
+  return new Promise(resolve => {
+    const image = new Image();
+    image.addEventListener("load", () => {
+      try {
+        assign(createSphereTexture(image, size, longitude, isEarth));
+      } catch (error) {
+        console.warn("Surface projection unavailable; use a local HTTP server.", error);
+      }
+      drawJourney(currentJourneyProgress);
+      resolve();
+    });
+    image.addEventListener("error", () => {
+      drawJourney(currentJourneyProgress);
+      resolve();
+    });
+    image.src = src;
   });
-  image.addEventListener("error", () => drawJourney(currentJourneyProgress));
-  image.src = src;
 }
 
-loadSurface("assets/earth-blue-marble.jpg", 1536, -70, true, value => earthTexture = value);
-loadSurface("assets/moon-lroc.jpg", 512, 0, false, value => moonTexture = value);
+const surfaceReady = Promise.all([
+  loadSurface("assets/earth-blue-marble.jpg", 1536, -70, true, value => earthTexture = value),
+  loadSurface("assets/moon-lroc.jpg", 512, 0, false, value => moonTexture = value),
+]);
 
 const loadingStates = [
   [450, "CALIBRATING OPTICS"],
@@ -968,7 +976,7 @@ function completeLoadingSequence() {
   }, motionQuery.matches ? 20 : 720);
 }
 
-function initializeLoadingSequence() {
+async function initializeLoadingSequence() {
   if (sessionStorage.getItem("cosmos-intro-seen") || motionQuery.matches) {
     completeLoadingSequence();
     return;
@@ -980,10 +988,11 @@ function initializeLoadingSequence() {
     }, delay);
   });
 
-  window.setTimeout(() => {
-    sessionStorage.setItem("cosmos-intro-seen", "true");
-    completeLoadingSequence();
-  }, 2350);
+  const minimumIntro = new Promise(resolve => window.setTimeout(resolve, 2350));
+  const surfaceTimeout = new Promise(resolve => window.setTimeout(resolve, 6000));
+  await Promise.all([minimumIntro, Promise.race([surfaceReady, surfaceTimeout])]);
+  sessionStorage.setItem("cosmos-intro-seen", "true");
+  completeLoadingSequence();
 }
 
 window.addEventListener("pointermove", (event) => {
