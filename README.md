@@ -2,43 +2,40 @@
 
 Cosmos Explorer is an interactive astronomy experience built around cinematic scrollytelling. It is designed to make the scale and structure of the universe feel immediate before introducing deeper educational material.
 
-## Current milestone: V2 opening experience
+[Open Cosmos Explorer](https://moebius1eq-dotcom.github.io/Cosmos-Explorer/)
 
-The first V2 milestone focuses only on the site's entrance:
+![Cosmos Explorer opening view](assets/cosmos-explorer-preview.png)
 
-- a restrained observatory loading sequence
-- a layered canvas starfield with subtle pointer parallax
-- the main **COSMOS EXPLORER** hero composition
-- a minimal scroll prompt
-- the beginning of the first scroll transition, revealing Earth and the journey's departure point
-- a reversible, scroll-controlled transition from Earth's curved limb to the full Earth–Moon system
-- responsive behavior and reduced-motion support
+## Current experience
 
-### Earth–Moon journey milestone
+The site is one continuous, reversible camera journey across eight observation scales:
 
-The first scale transition now uses a sticky viewport and a procedural Canvas 2D scene. Scrolling controls the camera distance directly: Earth's atmospheric limb rises into view, the full globe recedes into space, the Moon appears, and a sparse `384,400 KM` lunar-distance marker establishes the first change in scale. Reversing the scroll reverses the entire camera move.
+1. Earth and Moon
+2. Inner Solar System
+3. Full Solar System
+4. Stellar neighborhood
+5. Milky Way
+6. Local Group
+7. Cosmic web and Laniākea
+8. Observable universe
 
-Earth uses the existing NASA Blue Marble surface/cloud composite, inverse spherical projection, a curved day/night terminator, and a thin atmospheric rim. The Moon uses NASA's LROC surface mosaic and the same directional sunlight. Both projected spheres are cached once after their images load, so scrolling only moves and scales them.
+Scrolling controls scale, position, and opacity directly. Earth begins as a curved limb, resolves into a full globe, recedes beside the Moon, and then becomes one orbit around the Sun. Each previously enormous structure contracts before the next scale appears. Scrolling upward reverses the same camera path without a section cut.
 
-The sequence now spans 900 viewport heights. A logarithmic scale curve keeps the opening departure slow before accelerating into the Earth-Moon system. The diameter ratio is accurate; the Earth-Moon separation is compressed for legibility, so this is a cinematic scale illustration rather than a literal distance diagram.
+Earth uses NASA Blue Marble imagery with inverse spherical projection, directional light, a curved terminator, and a thin atmospheric rim. The Moon uses NASA LROC imagery under the same light direction. The later stages use cached procedural renderings for the Sun, orbital systems, stellar neighborhood, spiral galaxies, cosmic web, and observable horizon.
 
-The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. The camera reveals the Solar System, stellar neighborhood, Milky Way, and Local Group before contracting the named galaxies into a single marker within a procedural network of filaments, clusters, and voids. That web then recedes into a bounded observable volume surrounded by a subdued last-scattering surface, ending at the approximate `93 BILLION LIGHT-YEARS` diameter of the observable universe. The horizon is presented as the limit of what can be observed, not as a physical edge. Positions and scales are composed for legibility rather than presented as a literal spatial map.
+The 72-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
 
-The header index provides direct access to all eight observation scales. Selecting a destination maps to the corresponding point in the same continuous scroll timeline, and the current scale remains marked when the index is reopened. Each scale also has a URL fragment, so a selected view can be shared, restored on reload, and revisited with browser Back and Forward controls.
+## Navigation and access
 
-A semantic outline carries the same measurements and scale relationships for assistive technology, while the visual canvas remains decorative. The index contains keyboard focus while open and supports Escape to return to the journey.
+The header index jumps to any scale without creating a separate scene. Every destination has a shareable URL fragment and works with browser Back and Forward controls. Manual scrolling updates the current fragment after movement settles. The final frame includes a `RETURN TO EARTH` action that closes the journey into a loop.
 
-Canvas updates are synchronized to display frames during scrolling and resizing. The background stars use deterministic positions, so changing viewport size or device orientation does not regenerate the sky, and animation pauses while the page is hidden.
+A semantic outline exposes the same scale relationships and measurements to assistive technology. The index traps keyboard focus while open, closes with Escape, and marks the active scale. Reduced-motion mode freezes ambient animation while preserving direct scroll control.
 
-The Earth and Moon maps are preloaded from the document head. On a first visit, the observatory loader coordinates its minimum cinematic duration with surface projection, avoiding an untextured flash on slower devices while retaining a bounded fallback if either image is unavailable.
+## Rendering
 
-The deployed site includes a project-owned observatory favicon and a social preview captured from the rendered opening frame, with Open Graph and large-image card metadata for shared links.
+The experience uses HTML, CSS, and Canvas 2D with no framework or build step. Planetary and procedural textures are cached before scrolling, canvas updates are synchronized to display frames, and deterministic stars remain stable across resizing. Animation pauses while the page is hidden.
 
-Stage names and index highlighting are derived from the same representative timeline positions used by navigation. This keeps each label centered on its visual hold and prevents the interface from drifting out of sync as the continuous journey expands.
-
-The lower-right observatory readout includes a thin journey rail tied to exact scroll progress. After manual scrolling settles, the current scale is reflected in the URL without adding history entries, so copying the address restores the view on screen.
-
-At the final observable-universe hold, a restrained `RETURN TO EARTH` control closes the experience into a reversible loop. It appears only at the end, participates in keyboard navigation while visible, and returns through the same scroll-controlled camera timeline.
+The first-visit loader waits for both its minimum cinematic duration and planetary surface preparation. If an image is unavailable, shaded fallback spheres keep the journey usable.
 
 ## Run locally
 
@@ -60,11 +57,13 @@ The interface combines the quiet precision of a scientific observatory with cine
 
 ## Roadmap
 
-1. Refine the V2 opening and Earth–Moon pullback from real-device feedback.
-2. Continue the scale journey into the inner and full Solar System.
-3. Extend the journey through stellar, galactic, and observable-universe scales.
-4. Add large environmental entry points for each astronomy topic.
-5. Build reusable data-driven explorers, beginning with the Solar System.
+- [x] Build the observatory opening and Earth–Moon departure.
+- [x] Continue through the inner and outer Solar System.
+- [x] Extend through stellar, galactic, cosmic-web, and observable-universe scales.
+- [x] Add responsive navigation, shareable scale links, reduced motion, and semantic access.
+- [ ] Refine pacing and composition from real-device feedback.
+- [ ] Add environmental entry points for deeper astronomy topics.
+- [ ] Build reusable data-driven explorers, beginning with the Solar System.
 
 ## Built with
 
