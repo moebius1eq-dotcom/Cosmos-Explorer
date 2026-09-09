@@ -929,6 +929,20 @@ function drawJourney(progress) {
   drawStarName(journeyContext, "M33 · TRIANGULUM", triangulumX + triangulumRadius * 0.65, triangulumY + triangulumRadius * 0.45, groupReveal * (1 - webPullback));
   drawStarName(journeyContext, "MILKY WAY", galaxyX - galaxyRadius * 0.4, galaxyY + galaxyRadius * 0.82, groupReveal * (1 - webPullback), "right");
 
+  const satelliteOpacity = groupReveal * (1 - webPullback);
+  const largeCloudX = galaxyX + galaxyRadius * 0.78;
+  const largeCloudY = galaxyY + galaxyRadius * 0.76;
+  const smallCloudX = galaxyX + galaxyRadius * 1.18;
+  const smallCloudY = galaxyY + galaxyRadius * 1.02;
+  drawDistantStar(journeyContext, largeCloudX, largeCloudY, mobile ? 0.58 : 0.78, "rgba(190, 205, 207, 0.72)", satelliteOpacity);
+  drawDistantStar(journeyContext, smallCloudX, smallCloudY, mobile ? 0.48 : 0.66, "rgba(176, 194, 199, 0.64)", satelliteOpacity);
+  if (mobile) {
+    drawStarName(journeyContext, "MAGELLANIC CLOUDS", smallCloudX + 7, smallCloudY + 12, satelliteOpacity * 0.68);
+  } else {
+    drawStarName(journeyContext, "LMC", largeCloudX + 7, largeCloudY + 9, satelliteOpacity * 0.78);
+    drawStarName(journeyContext, "SMC", smallCloudX + 7, smallCloudY + 9, satelliteOpacity * 0.68);
+  }
+
   const dwarfs = [
     [0.46, 0.34, 0.75],
     [0.51, 0.73, 0.55],
