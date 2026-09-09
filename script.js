@@ -21,6 +21,7 @@ let currentJourneyProgress = 0;
 let earthTexture = null;
 let moonTexture = null;
 let sunTexture = null;
+let milkyWayTexture = null;
 
 function loadSurface(src, size, longitude, isEarth, assign) {
   const image = new Image();
@@ -350,10 +351,61 @@ function drawStarName(context2d, label, x, y, opacity, align = "left") {
   context2d.restore();
 }
 
+function createMilkyWayTexture() {
+  const size = 1024;
+  const texture = document.createElement("canvas");
+  texture.width = texture.height = size;
+  const galaxy = texture.getContext("2d");
+  galaxy.translate(size / 2, size / 2);
+  galaxy.globalCompositeOperation = "lighter";
+
+  const core = galaxy.createRadialGradient(0, 0, 0, 0, 0, size * 0.16);
+  core.addColorStop(0, "rgba(255, 241, 199, 0.78)");
+  core.addColorStop(0.18, "rgba(224, 196, 147, 0.34)");
+  core.addColorStop(1, "rgba(125, 147, 160, 0)");
+  galaxy.fillStyle = core;
+  galaxy.beginPath();
+  galaxy.arc(0, 0, size * 0.16, 0, Math.PI * 2);
+  galaxy.fill();
+
+  for (let index = 0; index < 3200; index++) {
+    const arm = index % 4;
+    const radialNoise = seededNoise(index, 17);
+    const radius = Math.pow(radialNoise, 0.72) * size * 0.43;
+    const angle = arm * Math.PI / 2 + radius / size * 11.5 + (seededNoise(index, 29) - 0.5) * 0.5;
+    const scatter = (seededNoise(index, 41) - 0.5) * (12 + radius * 0.11);
+    const x = Math.cos(angle) * radius + Math.cos(angle + Math.PI / 2) * scatter;
+    const y = Math.sin(angle) * radius + Math.sin(angle + Math.PI / 2) * scatter;
+    const brightness = 0.12 + seededNoise(index, 53) * 0.48;
+    const pointRadius = 0.35 + seededNoise(index, 67) * 1.15;
+    const warm = radius < size * 0.16;
+    galaxy.fillStyle = warm
+      ? `rgba(238, 211, 166, ${brightness})`
+      : `rgba(166, 200, 215, ${brightness})`;
+    galaxy.beginPath();
+    galaxy.arc(x, y, pointRadius, 0, Math.PI * 2);
+    galaxy.fill();
+  }
+  return texture;
+}
+
+function drawMilkyWay(context2d, x, y, radius, opacity) {
+  if (opacity <= 0) return;
+  milkyWayTexture ||= createMilkyWayTexture();
+  context2d.save();
+  context2d.globalAlpha = opacity;
+  context2d.translate(x, y);
+  context2d.rotate(-0.18);
+  context2d.scale(1, 0.58);
+  context2d.drawImage(milkyWayTexture, -radius, -radius, radius * 2, radius * 2);
+  context2d.restore();
+}
+
 function drawJourney(progress) {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const solarProgress = clamp(progress / 0.75);
+  const stellarProgress = clamp(progress / 0.78);
+  const solarProgress = clamp(stellarProgress / 0.75);
   const innerProgress = clamp(solarProgress / 0.72);
   const earthProgress = clamp(innerProgress / 0.6);
   const reveal = smoothstep(range(earthProgress, 0.02, 0.34));
@@ -362,8 +414,10 @@ function drawJourney(progress) {
   const systemReveal = smoothstep(range(innerProgress, 0.72, 0.92));
   const outerPullback = smoothstep(range(solarProgress, 0.7, 0.94));
   const outerReveal = smoothstep(range(solarProgress, 0.76, 0.96));
-  const stellarPullback = smoothstep(range(progress, 0.74, 0.94));
-  const stellarReveal = smoothstep(range(progress, 0.8, 0.97));
+  const stellarPullback = smoothstep(range(stellarProgress, 0.74, 0.94));
+  const stellarReveal = smoothstep(range(stellarProgress, 0.8, 0.97));
+  const galacticPullback = smoothstep(range(progress, 0.76, 0.94));
+  const galacticReveal = smoothstep(range(progress, 0.8, 0.97));
   const mobile = width < 700;
 
   journeyContext.clearRect(0, 0, width, height);
@@ -372,8 +426,10 @@ function drawJourney(progress) {
   const finalRadius = Math.min(width, height) * (mobile ? 0.095 : 0.085);
   const radius = initialRadius * Math.pow(finalRadius / initialRadius, pullback);
   const framing = smoothstep(range(earthProgress, 0.08, 0.65));
-  const solarCenterX = mix(width * (mobile ? 0.5 : 0.52), width * (mobile ? 0.28 : 0.34), stellarPullback);
-  const solarCenterY = mix(height * 0.53, height * 0.62, stellarPullback);
+  const neighborhoodCenterX = mix(width * (mobile ? 0.28 : 0.34), width * 0.58, galacticPullback);
+  const neighborhoodCenterY = mix(height * 0.62, height * 0.57, galacticPullback);
+  const solarCenterX = mix(width * (mobile ? 0.5 : 0.52), neighborhoodCenterX, stellarPullback);
+  const solarCenterY = mix(height * 0.53, neighborhoodCenterY, stellarPullback);
   const stellarSystemScale = mix(1, 0.045, stellarPullback);
   const bodyScale = mix(1, 0.18, stellarPullback);
   const innerSystemScale = mix(1, mobile ? 0.34 : 0.29, outerPullback) * stellarSystemScale;
@@ -455,32 +511,47 @@ function drawJourney(progress) {
     smoothstep(range(innerProgress, 0.64, 0.79)),
   );
 
-  const sunPointOpacity = smoothstep(range(progress, 0.78, 0.9));
+  const neighborhoodOpacity = 1 - galacticPullback;
+  const sunPointOpacity = smoothstep(range(stellarProgress, 0.78, 0.9)) * neighborhoodOpacity;
   drawDistantStar(journeyContext, solarCenterX, solarCenterY, mobile ? 1.1 : 1.35, "rgba(255, 225, 158, 0.92)", sunPointOpacity);
 
   const alphaAX = width * (mobile ? 0.67 : 0.65);
   const alphaAY = height * (mobile ? 0.39 : 0.42);
   const alphaSeparation = mobile ? 6 : 10;
-  drawDistantStar(journeyContext, alphaAX, alphaAY, mobile ? 1.45 : 1.8, "rgba(255, 222, 154, 0.9)", stellarReveal);
-  drawDistantStar(journeyContext, alphaAX + alphaSeparation, alphaAY + alphaSeparation * 0.42, mobile ? 1.15 : 1.45, "rgba(255, 196, 121, 0.86)", stellarReveal);
+  const collapsingAlphaX = mix(alphaAX, neighborhoodCenterX, galacticPullback);
+  const collapsingAlphaY = mix(alphaAY, neighborhoodCenterY, galacticPullback);
+  drawDistantStar(journeyContext, collapsingAlphaX, collapsingAlphaY, mobile ? 1.45 : 1.8, "rgba(255, 222, 154, 0.9)", stellarReveal * neighborhoodOpacity);
+  drawDistantStar(journeyContext, collapsingAlphaX + alphaSeparation * neighborhoodOpacity, collapsingAlphaY + alphaSeparation * 0.42 * neighborhoodOpacity, mobile ? 1.15 : 1.45, "rgba(255, 196, 121, 0.86)", stellarReveal * neighborhoodOpacity);
 
   const proximaX = width * (mobile ? 0.74 : 0.76);
   const proximaY = height * (mobile ? 0.67 : 0.64);
-  drawDistantStar(journeyContext, proximaX, proximaY, mobile ? 1.15 : 1.5, "rgba(210, 93, 67, 0.88)", stellarReveal);
-  const starNameOpacity = smoothstep(range(progress, 0.9, 0.98));
+  const collapsingProximaX = mix(proximaX, neighborhoodCenterX, galacticPullback);
+  const collapsingProximaY = mix(proximaY, neighborhoodCenterY, galacticPullback);
+  drawDistantStar(journeyContext, collapsingProximaX, collapsingProximaY, mobile ? 1.15 : 1.5, "rgba(210, 93, 67, 0.88)", stellarReveal * neighborhoodOpacity);
+  const starNameOpacity = smoothstep(range(stellarProgress, 0.9, 0.98)) * neighborhoodOpacity;
   drawStarName(journeyContext, "SUN", solarCenterX - 10, solarCenterY + 17, starNameOpacity, "right");
   drawStarName(journeyContext, "α CENTAURI", alphaAX + 14, alphaAY - 11, starNameOpacity);
 
   journeyContext.save();
-  journeyContext.globalAlpha = stellarReveal * 0.24;
+  journeyContext.globalAlpha = stellarReveal * neighborhoodOpacity * 0.24;
   journeyContext.strokeStyle = "rgba(221, 228, 225, 0.38)";
   journeyContext.lineWidth = 0.75;
   journeyContext.setLineDash([2, 8]);
   journeyContext.beginPath();
   journeyContext.moveTo(solarCenterX, solarCenterY);
-  journeyContext.lineTo(proximaX, proximaY);
+  journeyContext.lineTo(collapsingProximaX, collapsingProximaY);
   journeyContext.stroke();
   journeyContext.restore();
+
+  const galaxyRadius = Math.min(width, height) * (mobile ? 0.46 : 0.48);
+  const galaxyX = width * (mobile ? 0.5 : 0.54);
+  const galaxyY = height * 0.52;
+  drawMilkyWay(journeyContext, galaxyX, galaxyY, galaxyRadius, galacticReveal);
+
+  const localMarkerX = galaxyX + galaxyRadius * (mobile ? 0.38 : 0.42);
+  const localMarkerY = galaxyY + galaxyRadius * 0.04;
+  drawDistantStar(journeyContext, localMarkerX, localMarkerY, 0.9, "rgba(126, 190, 218, 0.82)", galacticReveal);
+  drawStarName(journeyContext, "ORION SPUR · SUN", localMarkerX + 10, localMarkerY - 8, galacticReveal);
 }
 
 function drawStarfield(time = 0) {
@@ -515,7 +586,8 @@ function updateScrollScene() {
   const departureTop = departure.offsetTop;
   const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
-  const solarProgress = clamp(departureProgress / 0.75);
+  const stellarProgress = clamp(departureProgress / 0.78);
+  const solarProgress = clamp(stellarProgress / 0.75);
   const innerProgress = clamp(solarProgress / 0.72);
   const copyEntrance = smoothstep(range(innerProgress, 0, 0.12));
   const copyExit = 1 - smoothstep(range(innerProgress, 0.18, 0.34));
@@ -532,10 +604,14 @@ function updateScrollScene() {
   const outerCopyOpacity = smoothstep(range(solarProgress, 0.73, 0.79)) *
     (1 - smoothstep(range(solarProgress, 0.84, 0.9)));
   const neptuneLabelOpacity = smoothstep(range(solarProgress, 0.9, 0.98)) *
-    (1 - smoothstep(range(departureProgress, 0.76, 0.83)));
-  const stellarCopyOpacity = smoothstep(range(departureProgress, 0.76, 0.82)) *
-    (1 - smoothstep(range(departureProgress, 0.87, 0.92)));
-  const proximaLabelOpacity = smoothstep(range(departureProgress, 0.9, 0.98));
+    (1 - smoothstep(range(stellarProgress, 0.76, 0.83)));
+  const stellarCopyOpacity = smoothstep(range(stellarProgress, 0.76, 0.82)) *
+    (1 - smoothstep(range(stellarProgress, 0.87, 0.92)));
+  const proximaLabelOpacity = smoothstep(range(stellarProgress, 0.9, 0.98)) *
+    (1 - smoothstep(range(departureProgress, 0.77, 0.84)));
+  const galacticCopyOpacity = smoothstep(range(departureProgress, 0.77, 0.83)) *
+    (1 - smoothstep(range(departureProgress, 0.88, 0.93)));
+  const galaxyLabelOpacity = smoothstep(range(departureProgress, 0.91, 0.98));
 
   heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
   heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0) scale(${1 - heroProgress * 0.08})`;
@@ -551,16 +627,20 @@ function updateScrollScene() {
   journeyViewport.style.setProperty("--neptune-label-opacity", neptuneLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--stellar-copy-opacity", stellarCopyOpacity.toFixed(3));
   journeyViewport.style.setProperty("--proxima-label-opacity", proximaLabelOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--galactic-copy-opacity", galacticCopyOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--galaxy-label-opacity", galaxyLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--guide-opacity", mix(0.1, 0.32, copyEntrance).toFixed(3));
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");
-  journeyProgressStage.textContent = departureProgress < 0.37
+  journeyProgressStage.textContent = departureProgress < 0.29
     ? "EARTH SYSTEM"
-    : departureProgress < 0.57
+    : departureProgress < 0.44
       ? "INNER SOLAR SYSTEM"
-      : departureProgress < 0.77
+      : departureProgress < 0.59
         ? "SOLAR SYSTEM"
-        : "STELLAR NEIGHBORHOOD";
+        : departureProgress < 0.78
+          ? "STELLAR NEIGHBORHOOD"
+          : "MILKY WAY";
   drawJourney(departureProgress);
   if (motionQuery.matches) drawStarfield();
 }

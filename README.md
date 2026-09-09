@@ -22,7 +22,7 @@ Earth uses the existing NASA Blue Marble surface/cloud composite, inverse spheri
 
 The sequence now spans 900 viewport heights. A logarithmic scale curve keeps the opening departure slow before accelerating into the Earth-Moon system. The diameter ratio is accurate; the Earth-Moon separation is compressed for legibility, so this is a cinematic scale illustration rather than a literal distance diagram.
 
-The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. Earth becomes an orbital point, the Sun resolves with a restrained procedural surface, and Mercury through Mars appear on compressed orbital traces with a `1 AU` distance marker. The camera then pulls back again to reveal Jupiter, Saturn and its rings, Uranus, and Neptune at `30.1 AU`. Finally the full Solar System contracts into a point in the local stellar neighborhood, where the Alpha Centauri pair and Proxima Centauri resolve at a labeled `4.24 LIGHT-YEARS`. Orbital and stellar positions are composed for legibility rather than presented as a literal spatial map.
+The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. Earth becomes an orbital point, the Sun resolves with a restrained procedural surface, and Mercury through Mars appear on compressed orbital traces with a `1 AU` distance marker. The camera then reveals the outer planets at `30.1 AU`, contracts the Solar System into the local stellar neighborhood at `4.24 LIGHT-YEARS`, and finally resolves a procedural Milky Way with the Sun marked in the Orion Spur and an approximate `100,000 LIGHT-YEARS` diameter. Orbital, stellar, and galactic positions are composed for legibility rather than presented as a literal spatial map.
 
 ## Run locally
 
