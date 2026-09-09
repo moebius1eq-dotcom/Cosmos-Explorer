@@ -32,6 +32,8 @@ Canvas updates are synchronized to display frames during scrolling and resizing.
 
 The Earth and Moon maps are preloaded from the document head. On a first visit, the observatory loader coordinates its minimum cinematic duration with surface projection, avoiding an untextured flash on slower devices while retaining a bounded fallback if either image is unavailable.
 
+Stage names and index highlighting are derived from the same representative timeline positions used by navigation. This keeps each label centered on its visual hold and prevents the interface from drifting out of sync as the continuous journey expands.
+
 ## Run locally
 
 No packages or build tools are required. Open this cloned repository in VS Code and serve it with Live Server, or run `python -m http.server 8000` and open `http://localhost:8000`.

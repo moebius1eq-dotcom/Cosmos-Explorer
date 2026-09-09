@@ -15,6 +15,10 @@ const scaleIndex = document.querySelector(".scale-index");
 const scaleIndexClose = document.querySelector(".scale-index__close");
 const scaleIndexLinks = [...document.querySelectorAll(".scale-index__list a")];
 const mainContent = document.querySelector("main");
+const journeyStages = scaleIndexLinks.map(link => ({
+  label: link.querySelector("strong").textContent,
+  progress: Number(link.dataset.progress),
+}));
 
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
@@ -50,6 +54,19 @@ function restoreLocationScale(behavior = "auto") {
   const link = scaleIndexLinks.find(candidate => candidate.hash === window.location.hash);
   if (link) scrollToScale(link, behavior);
   else if (!window.location.hash || window.location.hash === "#top") window.scrollTo({ top: 0, behavior });
+}
+
+function getCurrentScaleIndex(progress) {
+  let closestIndex = 0;
+  let closestDistance = Infinity;
+  journeyStages.forEach((stage, index) => {
+    const distance = Math.abs(progress - stage.progress);
+    if (distance < closestDistance) {
+      closestIndex = index;
+      closestDistance = distance;
+    }
+  });
+  return closestIndex;
 }
 
 function setScaleIndex(open) {
@@ -928,36 +945,8 @@ function updateScrollScene() {
   journeyViewport.style.setProperty("--guide-opacity", mix(0.1, 0.32, copyEntrance).toFixed(3));
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");
-  journeyProgressStage.textContent = departureProgress < 0.18
-    ? "EARTH SYSTEM"
-    : departureProgress < 0.28
-      ? "INNER SOLAR SYSTEM"
-      : departureProgress < 0.38
-        ? "SOLAR SYSTEM"
-        : departureProgress < 0.5
-          ? "STELLAR NEIGHBORHOOD"
-          : departureProgress < 0.64
-            ? "MILKY WAY"
-            : departureProgress < 0.672
-              ? "LOCAL GROUP"
-              : departureProgress < 0.86
-                ? "COSMIC WEB"
-                : "OBSERVABLE UNIVERSE";
-  const currentIndex = departureProgress < 0.18
-    ? 0
-    : departureProgress < 0.28
-      ? 1
-      : departureProgress < 0.38
-        ? 2
-        : departureProgress < 0.5
-          ? 3
-          : departureProgress < 0.64
-            ? 4
-            : departureProgress < 0.672
-              ? 5
-              : departureProgress < 0.86
-                ? 6
-                : 7;
+  const currentIndex = getCurrentScaleIndex(departureProgress);
+  journeyProgressStage.textContent = journeyStages[currentIndex].label;
   scaleIndexLinks.forEach((link, index) => {
     if (index === currentIndex) link.setAttribute("aria-current", "true");
     else link.removeAttribute("aria-current");
