@@ -793,6 +793,18 @@ body.index-open {
   opacity: var(--journey-ui-opacity, 0);
 }
 
+.journey-progress::before {
+  content: "";
+  align-self: center;
+  width: clamp(2.5rem, 5vw, 5rem);
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(159, 200, 224, 0.72) 0 var(--journey-progress-value, 0%),
+    rgba(240, 241, 238, 0.16) var(--journey-progress-value, 0%) 100%
+  );
+}
+
 @keyframes load-progress {
   to { transform: scaleX(1); }
 }
@@ -803,6 +815,10 @@ body.index-open {
 }
 
 @media (max-width: 700px) {
+  .journey-progress::before {
+    display: none;
+  }
+
   .scale-index__list a {
     grid-template-columns: 2rem 1fr;
   }

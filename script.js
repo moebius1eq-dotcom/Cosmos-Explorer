@@ -27,6 +27,7 @@ let stars = [];
 let animationFrame = 0;
 let scrollFrame = 0;
 let resizeFrame = 0;
+let locationSyncTimer = 0;
 let pixelRatio = 1;
 let journeyPixelRatio = 1;
 let currentJourneyProgress = 0;
@@ -68,6 +69,15 @@ function getCurrentScaleIndex(progress) {
     }
   });
   return closestIndex;
+}
+
+function syncLocationToScroll() {
+  if (window.scrollY < departure.offsetTop - window.innerHeight * 0.1) {
+    if (window.location.hash && window.location.hash !== "#top") history.replaceState(null, "", "#top");
+    return;
+  }
+  const link = scaleIndexLinks[getCurrentScaleIndex(currentJourneyProgress)];
+  if (window.location.hash !== link.hash) history.replaceState(null, "", link.hash);
 }
 
 function setScaleIndex(open) {
@@ -957,6 +967,7 @@ function updateScrollScene() {
   journeyReset.tabIndex = resetActive ? 0 : -1;
   journeyViewport.style.setProperty("--guide-opacity", mix(0.1, 0.32, copyEntrance).toFixed(3));
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
+  journeyViewport.style.setProperty("--journey-progress-value", `${(departureProgress * 100).toFixed(2)}%`);
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");
   const currentIndex = getCurrentScaleIndex(departureProgress);
   journeyProgressStage.textContent = journeyStages[currentIndex].label;
@@ -1012,6 +1023,8 @@ window.addEventListener("resize", () => {
   });
 }, { passive: true });
 window.addEventListener("scroll", () => {
+  window.clearTimeout(locationSyncTimer);
+  locationSyncTimer = window.setTimeout(syncLocationToScroll, 220);
   if (scrollFrame) return;
   scrollFrame = requestAnimationFrame(() => {
     scrollFrame = 0;

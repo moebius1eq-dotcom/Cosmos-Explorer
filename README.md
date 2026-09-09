@@ -36,6 +36,8 @@ The deployed site includes a project-owned observatory favicon and a social prev
 
 Stage names and index highlighting are derived from the same representative timeline positions used by navigation. This keeps each label centered on its visual hold and prevents the interface from drifting out of sync as the continuous journey expands.
 
+The lower-right observatory readout includes a thin journey rail tied to exact scroll progress. After manual scrolling settles, the current scale is reflected in the URL without adding history entries, so copying the address restores the view on screen.
+
 At the final observable-universe hold, a restrained `RETURN TO EARTH` control closes the experience into a reversible loop. It appears only at the end, participates in keyboard navigation while visible, and returns through the same scroll-controlled camera timeline.
 
 ## Run locally
