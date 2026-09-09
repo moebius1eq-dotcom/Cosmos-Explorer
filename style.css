@@ -380,7 +380,7 @@ body.is-ready .scroll-cue {
 .departure {
   position: relative;
   z-index: 2;
-  height: 3900svh;
+  height: 4900svh;
   background: transparent;
 }
 
@@ -526,6 +526,16 @@ body.is-ready .scroll-cue {
   pointer-events: none;
 }
 
+.group-copy {
+  position: absolute;
+  z-index: 2;
+  top: 31%;
+  left: var(--page-padding);
+  opacity: var(--group-copy-opacity, 0);
+  transform: translateY(calc((1 - var(--group-copy-opacity, 0)) * 1.5rem));
+  pointer-events: none;
+}
+
 .solar-copy__title {
   margin: 0;
   font-size: clamp(2.5rem, 6vw, 6rem);
@@ -571,6 +581,13 @@ body.is-ready .scroll-cue {
   bottom: 15%;
   text-align: right;
   opacity: var(--galaxy-label-opacity, 0);
+}
+
+.scale-label--andromeda {
+  right: var(--page-padding);
+  bottom: 15%;
+  text-align: right;
+  opacity: var(--andromeda-label-opacity, 0);
 }
 
 .scale-label__name,
@@ -663,6 +680,10 @@ body.is-ready .scroll-cue {
     top: 21%;
   }
 
+  .group-copy {
+    top: 21%;
+  }
+
   .scale-label--sun {
     top: 13%;
   }
@@ -680,6 +701,10 @@ body.is-ready .scroll-cue {
   }
 
   .scale-label--galaxy {
+    bottom: 12%;
+  }
+
+  .scale-label--andromeda {
     bottom: 12%;
   }
 }
