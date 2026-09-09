@@ -32,6 +32,8 @@ Canvas updates are synchronized to display frames during scrolling and resizing.
 
 The Earth and Moon maps are preloaded from the document head. On a first visit, the observatory loader coordinates its minimum cinematic duration with surface projection, avoiding an untextured flash on slower devices while retaining a bounded fallback if either image is unavailable.
 
+The deployed site includes a project-owned observatory favicon and a social preview captured from the rendered opening frame, with Open Graph and large-image card metadata for shared links.
+
 Stage names and index highlighting are derived from the same representative timeline positions used by navigation. This keeps each label centered on its visual hold and prevents the interface from drifting out of sync as the continuous journey expands.
 
 At the final observable-universe hold, a restrained `RETURN TO EARTH` control closes the experience into a reversible loop. It appears only at the end, participates in keyboard navigation while visible, and returns through the same scroll-controlled camera timeline.
