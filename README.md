@@ -22,7 +22,7 @@ Earth uses the existing NASA Blue Marble surface/cloud composite, inverse spheri
 
 The sequence now spans 900 viewport heights. A logarithmic scale curve keeps the opening departure slow before accelerating into the Earth-Moon system. The diameter ratio is accurate; the Earth-Moon separation is compressed for legibility, so this is a cinematic scale illustration rather than a literal distance diagram.
 
-The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. The camera reveals the Solar System, contracts it into the local stellar neighborhood, resolves the Milky Way, and then places our galaxy within the Local Group beside Andromeda, Triangulum, and several dwarf-galaxy points. The final scale marker gives the approximate `2.5 MILLION LIGHT-YEARS` distance to Andromeda. Orbital, stellar, and galactic positions are composed for legibility rather than presented as a literal spatial map.
+The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. The camera reveals the Solar System, stellar neighborhood, Milky Way, and Local Group before contracting the named galaxies into a single marker within a procedural network of filaments, clusters, and voids. The cosmic-web frame ends at the approximate `520 MILLION LIGHT-YEARS` scale of the Laniākea supercluster. Positions and scales are composed for legibility rather than presented as a literal spatial map.
 
 ## Run locally
 

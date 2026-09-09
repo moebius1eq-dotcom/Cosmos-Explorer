@@ -22,6 +22,7 @@ let earthTexture = null;
 let moonTexture = null;
 let sunTexture = null;
 let milkyWayTexture = null;
+let cosmicWebTexture = null;
 
 function loadSurface(src, size, longitude, isEarth, assign) {
   const image = new Image();
@@ -401,10 +402,75 @@ function drawMilkyWay(context2d, x, y, radius, opacity, rotation = -0.18, flatte
   context2d.restore();
 }
 
+function createCosmicWebTexture() {
+  const size = 1024;
+  const texture = document.createElement("canvas");
+  texture.width = texture.height = size;
+  const web = texture.getContext("2d");
+  const nodes = Array.from({ length: 72 }, (_, index) => ({
+    x: size * (0.08 + seededNoise(index, 101) * 0.84),
+    y: size * (0.08 + seededNoise(index, 113) * 0.84),
+    weight: seededNoise(index, 127),
+  }));
+
+  web.globalCompositeOperation = "lighter";
+  for (let index = 0; index < nodes.length; index++) {
+    const source = nodes[index];
+    const nearest = nodes
+      .map((node, target) => ({ target, distance: Math.hypot(node.x - source.x, node.y - source.y) }))
+      .filter(({ target }) => target !== index)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, source.weight > 0.7 ? 3 : 2);
+    for (const { target, distance } of nearest) {
+      if (target < index || distance > size * 0.22) continue;
+      const destination = nodes[target];
+      const gradient = web.createLinearGradient(source.x, source.y, destination.x, destination.y);
+      gradient.addColorStop(0, "rgba(120, 174, 193, 0.2)");
+      gradient.addColorStop(0.5, "rgba(178, 201, 207, 0.08)");
+      gradient.addColorStop(1, "rgba(120, 174, 193, 0.2)");
+      web.strokeStyle = gradient;
+      web.lineWidth = 0.6 + Math.min(source.weight, destination.weight) * 1.2;
+      web.beginPath();
+      web.moveTo(source.x, source.y);
+      const bend = (seededNoise(index, target) - 0.5) * 55;
+      web.quadraticCurveTo(
+        (source.x + destination.x) / 2 + bend,
+        (source.y + destination.y) / 2 - bend,
+        destination.x,
+        destination.y,
+      );
+      web.stroke();
+    }
+  }
+
+  for (const node of nodes) {
+    const radius = 1.2 + node.weight * 3.4;
+    const glow = web.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 5);
+    glow.addColorStop(0, `rgba(224, 231, 218, ${0.34 + node.weight * 0.32})`);
+    glow.addColorStop(0.18, "rgba(154, 194, 205, 0.22)");
+    glow.addColorStop(1, "rgba(110, 158, 177, 0)");
+    web.fillStyle = glow;
+    web.beginPath();
+    web.arc(node.x, node.y, radius * 5, 0, Math.PI * 2);
+    web.fill();
+  }
+  return texture;
+}
+
+function drawCosmicWeb(context2d, x, y, radius, opacity) {
+  if (opacity <= 0) return;
+  cosmicWebTexture ||= createCosmicWebTexture();
+  context2d.save();
+  context2d.globalAlpha = opacity;
+  context2d.drawImage(cosmicWebTexture, x - radius, y - radius, radius * 2, radius * 2);
+  context2d.restore();
+}
+
 function drawJourney(progress) {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const galacticProgress = clamp(progress / 0.8);
+  const groupProgress = clamp(progress / 0.8);
+  const galacticProgress = clamp(groupProgress / 0.8);
   const stellarProgress = clamp(galacticProgress / 0.78);
   const solarProgress = clamp(stellarProgress / 0.75);
   const innerProgress = clamp(solarProgress / 0.72);
@@ -419,8 +485,10 @@ function drawJourney(progress) {
   const stellarReveal = smoothstep(range(stellarProgress, 0.8, 0.97));
   const galacticPullback = smoothstep(range(galacticProgress, 0.76, 0.94));
   const galacticReveal = smoothstep(range(galacticProgress, 0.8, 0.97));
-  const groupPullback = smoothstep(range(progress, 0.78, 0.95));
-  const groupReveal = smoothstep(range(progress, 0.82, 0.97));
+  const groupPullback = smoothstep(range(groupProgress, 0.78, 0.95));
+  const groupReveal = smoothstep(range(groupProgress, 0.82, 0.97));
+  const webPullback = smoothstep(range(progress, 0.78, 0.95));
+  const webReveal = smoothstep(range(progress, 0.82, 0.98));
   const mobile = width < 700;
 
   journeyContext.clearRect(0, 0, width, height);
@@ -548,9 +616,12 @@ function drawJourney(progress) {
   journeyContext.restore();
 
   const fullGalaxyRadius = Math.min(width, height) * (mobile ? 0.46 : 0.48);
-  const galaxyRadius = mix(fullGalaxyRadius, Math.min(width, height) * (mobile ? 0.075 : 0.085), groupPullback);
-  const galaxyX = mix(width * (mobile ? 0.5 : 0.54), width * (mobile ? 0.29 : 0.34), groupPullback);
-  const galaxyY = mix(height * 0.52, height * (mobile ? 0.58 : 0.6), groupPullback);
+  const groupPointX = width * (mobile ? 0.38 : 0.42);
+  const groupPointY = height * 0.57;
+  const groupScale = mix(1, 0.04, webPullback);
+  const galaxyRadius = mix(fullGalaxyRadius, Math.min(width, height) * (mobile ? 0.075 : 0.085), groupPullback) * groupScale;
+  const galaxyX = mix(mix(width * (mobile ? 0.5 : 0.54), width * (mobile ? 0.29 : 0.34), groupPullback), groupPointX, webPullback);
+  const galaxyY = mix(mix(height * 0.52, height * (mobile ? 0.58 : 0.6), groupPullback), groupPointY, webPullback);
   drawMilkyWay(journeyContext, galaxyX, galaxyY, galaxyRadius, galacticReveal);
 
   const localMarkerX = galaxyX + galaxyRadius * (mobile ? 0.38 : 0.42);
@@ -558,18 +629,18 @@ function drawJourney(progress) {
   drawDistantStar(journeyContext, localMarkerX, localMarkerY, 0.9, "rgba(126, 190, 218, 0.82)", galacticReveal * (1 - groupPullback));
   drawStarName(journeyContext, "ORION SPUR · SUN", localMarkerX + 10, localMarkerY - 8, galacticReveal * (1 - groupPullback));
 
-  const andromedaX = width * (mobile ? 0.68 : 0.7);
-  const andromedaY = height * (mobile ? 0.39 : 0.4);
-  const andromedaRadius = Math.min(width, height) * (mobile ? 0.13 : 0.16);
+  const andromedaX = mix(width * (mobile ? 0.68 : 0.7), groupPointX, webPullback);
+  const andromedaY = mix(height * (mobile ? 0.39 : 0.4), groupPointY, webPullback);
+  const andromedaRadius = Math.min(width, height) * (mobile ? 0.13 : 0.16) * groupScale;
   drawMilkyWay(journeyContext, andromedaX, andromedaY, andromedaRadius, groupReveal * 0.9, 0.26, 0.3);
-  drawStarName(journeyContext, "M31 · ANDROMEDA", andromedaX + andromedaRadius * 0.45, andromedaY - andromedaRadius * 0.18, groupReveal);
+  drawStarName(journeyContext, "M31 · ANDROMEDA", andromedaX + andromedaRadius * 0.45, andromedaY - andromedaRadius * 0.18, groupReveal * (1 - webPullback));
 
-  const triangulumX = width * (mobile ? 0.69 : 0.67);
-  const triangulumY = height * (mobile ? 0.69 : 0.72);
-  const triangulumRadius = Math.min(width, height) * (mobile ? 0.06 : 0.07);
+  const triangulumX = mix(width * (mobile ? 0.69 : 0.67), groupPointX, webPullback);
+  const triangulumY = mix(height * (mobile ? 0.69 : 0.72), groupPointY, webPullback);
+  const triangulumRadius = Math.min(width, height) * (mobile ? 0.06 : 0.07) * groupScale;
   drawMilkyWay(journeyContext, triangulumX, triangulumY, triangulumRadius, groupReveal * 0.72, -0.52, 0.7);
-  drawStarName(journeyContext, "M33 · TRIANGULUM", triangulumX + triangulumRadius * 0.65, triangulumY + triangulumRadius * 0.45, groupReveal);
-  drawStarName(journeyContext, "MILKY WAY", galaxyX - galaxyRadius * 0.4, galaxyY + galaxyRadius * 0.82, groupReveal, "right");
+  drawStarName(journeyContext, "M33 · TRIANGULUM", triangulumX + triangulumRadius * 0.65, triangulumY + triangulumRadius * 0.45, groupReveal * (1 - webPullback));
+  drawStarName(journeyContext, "MILKY WAY", galaxyX - galaxyRadius * 0.4, galaxyY + galaxyRadius * 0.82, groupReveal * (1 - webPullback), "right");
 
   const dwarfs = [
     [0.46, 0.34, 0.75],
@@ -579,11 +650,11 @@ function drawJourney(progress) {
     [0.42, 0.82, 0.42],
   ];
   for (const [x, y, strength] of dwarfs) {
-    drawDistantStar(journeyContext, width * x, height * y, mobile ? 0.65 : 0.8, "rgba(185, 204, 210, 0.6)", groupReveal * strength);
+    drawDistantStar(journeyContext, mix(width * x, groupPointX, webPullback), mix(height * y, groupPointY, webPullback), mobile ? 0.65 : 0.8, "rgba(185, 204, 210, 0.6)", groupReveal * strength * (1 - webPullback));
   }
 
   journeyContext.save();
-  journeyContext.globalAlpha = groupReveal * 0.2;
+  journeyContext.globalAlpha = groupReveal * (1 - webPullback) * 0.2;
   journeyContext.strokeStyle = "rgba(221, 228, 225, 0.38)";
   journeyContext.lineWidth = 0.75;
   journeyContext.setLineDash([2, 8]);
@@ -592,6 +663,15 @@ function drawJourney(progress) {
   journeyContext.lineTo(andromedaX, andromedaY);
   journeyContext.stroke();
   journeyContext.restore();
+
+  const webRadius = Math.min(width, height) * (mobile ? 0.62 : 0.65);
+  const webX = width * (mobile ? 0.5 : 0.52);
+  const webY = height * 0.52;
+  drawCosmicWeb(journeyContext, webX, webY, webRadius, webReveal * 0.9);
+  const groupMarkerX = webX - webRadius * 0.16;
+  const groupMarkerY = webY + webRadius * 0.09;
+  drawDistantStar(journeyContext, groupMarkerX, groupMarkerY, 0.9, "rgba(142, 205, 219, 0.9)", webReveal);
+  drawStarName(journeyContext, "LOCAL GROUP", groupMarkerX + 10, groupMarkerY - 8, webReveal);
 }
 
 function drawStarfield(time = 0) {
@@ -626,7 +706,8 @@ function updateScrollScene() {
   const departureTop = departure.offsetTop;
   const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
-  const galacticProgress = clamp(departureProgress / 0.8);
+  const groupProgress = clamp(departureProgress / 0.8);
+  const galacticProgress = clamp(groupProgress / 0.8);
   const stellarProgress = clamp(galacticProgress / 0.78);
   const solarProgress = clamp(stellarProgress / 0.75);
   const innerProgress = clamp(solarProgress / 0.72);
@@ -653,10 +734,14 @@ function updateScrollScene() {
   const galacticCopyOpacity = smoothstep(range(galacticProgress, 0.77, 0.83)) *
     (1 - smoothstep(range(galacticProgress, 0.88, 0.93)));
   const galaxyLabelOpacity = smoothstep(range(galacticProgress, 0.91, 0.98)) *
+    (1 - smoothstep(range(groupProgress, 0.79, 0.86)));
+  const groupCopyOpacity = smoothstep(range(groupProgress, 0.79, 0.84)) *
+    (1 - smoothstep(range(groupProgress, 0.88, 0.93)));
+  const andromedaLabelOpacity = smoothstep(range(groupProgress, 0.91, 0.98)) *
     (1 - smoothstep(range(departureProgress, 0.79, 0.86)));
-  const groupCopyOpacity = smoothstep(range(departureProgress, 0.79, 0.84)) *
+  const webCopyOpacity = smoothstep(range(departureProgress, 0.79, 0.84)) *
     (1 - smoothstep(range(departureProgress, 0.88, 0.93)));
-  const andromedaLabelOpacity = smoothstep(range(departureProgress, 0.91, 0.98));
+  const laniakeaLabelOpacity = smoothstep(range(departureProgress, 0.91, 0.98));
 
   heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
   heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0) scale(${1 - heroProgress * 0.08})`;
@@ -676,20 +761,24 @@ function updateScrollScene() {
   journeyViewport.style.setProperty("--galaxy-label-opacity", galaxyLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--group-copy-opacity", groupCopyOpacity.toFixed(3));
   journeyViewport.style.setProperty("--andromeda-label-opacity", andromedaLabelOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--web-copy-opacity", webCopyOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--laniakea-label-opacity", laniakeaLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--guide-opacity", mix(0.1, 0.32, copyEntrance).toFixed(3));
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");
-  journeyProgressStage.textContent = departureProgress < 0.23
+  journeyProgressStage.textContent = departureProgress < 0.18
     ? "EARTH SYSTEM"
-    : departureProgress < 0.35
+    : departureProgress < 0.28
       ? "INNER SOLAR SYSTEM"
-      : departureProgress < 0.47
+      : departureProgress < 0.38
         ? "SOLAR SYSTEM"
-        : departureProgress < 0.62
+        : departureProgress < 0.5
           ? "STELLAR NEIGHBORHOOD"
-          : departureProgress < 0.8
+          : departureProgress < 0.64
             ? "MILKY WAY"
-            : "LOCAL GROUP";
+            : departureProgress < 0.8
+              ? "LOCAL GROUP"
+              : "COSMIC WEB";
   drawJourney(departureProgress);
   if (motionQuery.matches) drawStarfield();
 }
