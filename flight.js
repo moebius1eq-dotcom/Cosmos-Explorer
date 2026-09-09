@@ -126,8 +126,11 @@ function initialize() {
     id=t<.5?a.id:b.id;
     Object.values(bodies).forEach((mesh,i)=>{mesh.rotation.y=p*(i%2?1:-1)*1.6;});
     const shrink=1-THREE.MathUtils.smoothstep(p,.55,.62);solar.scale.setScalar(Math.max(.001,shrink));
-    milky.visible=p>.55;andromeda.visible=p>.69;web.visible=p>.8;horizon.visible=p>.93;
-    milky.material.opacity=THREE.MathUtils.smoothstep(p,.55,.61)*.85;
+    milky.visible=p>.55&&p<.9;andromeda.visible=p>.69&&p<.9;web.visible=p>.8;horizon.visible=p>.93;
+    const groupFade=1-THREE.MathUtils.smoothstep(p,.81,.9);
+    milky.material.opacity=THREE.MathUtils.smoothstep(p,.55,.61)*.85*groupFade;
+    andromeda.material.opacity=.8*groupFade;
+    milky.children[0].material.opacity=.5*groupFade;andromeda.children[0].material.opacity=.5*groupFade;
     web.material.opacity=THREE.MathUtils.smoothstep(p,.8,.88)*.65;
     const name=names[id]||id[0].toUpperCase()+id.slice(1);
     title.textContent=name;caption.querySelector('p').textContent=p<.55?'WORLDS / PERSPECTIVE FLIGHT':'BEYOND / A CHANGE OF SCALE';link.textContent=`Explore ${name} ↗`;link.href=href(id);
