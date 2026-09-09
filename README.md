@@ -24,6 +24,8 @@ The sequence now spans 900 viewport heights. A logarithmic scale curve keeps the
 
 The journey now continues without a section cut from the Earth-Moon system to a heliocentric view. The camera reveals the Solar System, stellar neighborhood, Milky Way, and Local Group before contracting the named galaxies into a single marker within a procedural network of filaments, clusters, and voids. That web then recedes into a bounded observable volume surrounded by a subdued last-scattering surface, ending at the approximate `93 BILLION LIGHT-YEARS` diameter of the observable universe. The horizon is presented as the limit of what can be observed, not as a physical edge. Positions and scales are composed for legibility rather than presented as a literal spatial map.
 
+The header index provides direct access to all eight observation scales. Selecting a destination maps to the corresponding point in the same continuous scroll timeline, and the current scale remains marked when the index is reopened.
+
 ## Run locally
 
 No packages or build tools are required. Open this cloned repository in VS Code and serve it with Live Server, or run `python -m http.server 8000` and open `http://localhost:8000`.

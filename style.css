@@ -486,6 +486,98 @@ body.is-ready .scroll-cue {
   left: calc(100% + 0.75rem);
 }
 
+.scale-index {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 1.65rem var(--page-padding) 2rem;
+  background: rgba(3, 4, 5, 0.96);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+}
+
+.scale-index.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.scale-index__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  color: rgba(240, 241, 238, 0.44);
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+}
+
+.scale-index__close {
+  padding: 0.8rem 0;
+  border: 0;
+  color: var(--white);
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.scale-index__list {
+  display: grid;
+  align-content: center;
+  max-width: 78rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem 0;
+  list-style: none;
+}
+
+.scale-index__list li {
+  border-bottom: 1px solid rgba(240, 241, 238, 0.1);
+}
+
+.scale-index__list a {
+  display: grid;
+  grid-template-columns: 3rem 1fr auto;
+  align-items: baseline;
+  gap: 1rem;
+  padding: clamp(0.65rem, 1.25vh, 1.1rem) 0;
+  color: rgba(240, 241, 238, 0.42);
+  text-decoration: none;
+  transition: color 180ms ease, padding-left 180ms ease;
+}
+
+.scale-index__list a:hover,
+.scale-index__list a:focus-visible,
+.scale-index__list a[aria-current="true"] {
+  padding-left: 0.65rem;
+  color: var(--white);
+}
+
+.scale-index__list span,
+.scale-index__list small {
+  font-size: 0.56rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+}
+
+.scale-index__list strong {
+  font-size: clamp(1.15rem, 2.5vw, 2.2rem);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+}
+
+.scale-index__list small {
+  color: rgba(240, 241, 238, 0.3);
+}
+
+body.index-open {
+  overflow: hidden;
+}
+
 .solar-copy {
   position: absolute;
   z-index: 2;
@@ -661,6 +753,13 @@ body.is-ready .scroll-cue {
 }
 
 @media (max-width: 700px) {
+  .scale-index__list a {
+    grid-template-columns: 2rem 1fr;
+  }
+
+  .scale-index__list small {
+    display: none;
+  }
   .site-header {
     grid-template-columns: 1fr 1fr;
   }

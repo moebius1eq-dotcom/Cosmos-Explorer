@@ -10,6 +10,10 @@ const journeyCanvas = document.querySelector(".journey-canvas");
 const journeyContext = journeyCanvas.getContext("2d", { alpha: true });
 const journeyProgressValue = document.querySelector(".journey-progress__value");
 const journeyProgressStage = document.querySelector(".journey-progress__stage");
+const menuButton = document.querySelector(".menu-button");
+const scaleIndex = document.querySelector(".scale-index");
+const scaleIndexClose = document.querySelector(".scale-index__close");
+const scaleIndexLinks = [...document.querySelectorAll(".scale-index__list a")];
 
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
@@ -24,6 +28,36 @@ let sunTexture = null;
 let milkyWayTexture = null;
 let cosmicWebTexture = null;
 let observableUniverseTexture = null;
+
+function setScaleIndex(open) {
+  scaleIndex.classList.toggle("is-open", open);
+  scaleIndex.setAttribute("aria-hidden", String(!open));
+  menuButton.setAttribute("aria-expanded", String(open));
+  page.classList.toggle("index-open", open);
+  if (open) {
+    const currentLink = scaleIndex.querySelector('[aria-current="true"]') || scaleIndexLinks[0];
+    currentLink.focus();
+  } else {
+    menuButton.focus();
+  }
+}
+
+menuButton.addEventListener("click", () => setScaleIndex(true));
+scaleIndexClose.addEventListener("click", () => setScaleIndex(false));
+window.addEventListener("keydown", event => {
+  if (event.key === "Escape" && scaleIndex.classList.contains("is-open")) setScaleIndex(false);
+});
+
+for (const link of scaleIndexLinks) {
+  link.addEventListener("click", event => {
+    event.preventDefault();
+    const viewport = Math.max(window.innerHeight, 1);
+    const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
+    const target = departure.offsetTop + journeyLength * Number(link.dataset.progress);
+    setScaleIndex(false);
+    window.scrollTo({ top: target, behavior: motionQuery.matches ? "auto" : "smooth" });
+  });
+}
 
 function loadSurface(src, size, longitude, isEarth, assign) {
   const image = new Image();
@@ -864,6 +898,25 @@ function updateScrollScene() {
               : departureProgress < 0.86
                 ? "COSMIC WEB"
                 : "OBSERVABLE UNIVERSE";
+  const currentIndex = departureProgress < 0.18
+    ? 0
+    : departureProgress < 0.28
+      ? 1
+      : departureProgress < 0.38
+        ? 2
+        : departureProgress < 0.5
+          ? 3
+          : departureProgress < 0.64
+            ? 4
+            : departureProgress < 0.672
+              ? 5
+              : departureProgress < 0.86
+                ? 6
+                : 7;
+  scaleIndexLinks.forEach((link, index) => {
+    if (index === currentIndex) link.setAttribute("aria-current", "true");
+    else link.removeAttribute("aria-current");
+  });
   drawJourney(departureProgress);
   if (motionQuery.matches) drawStarfield();
 }
