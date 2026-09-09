@@ -399,6 +399,23 @@ function drawOrbit(context2d, x, y, radiusX, radiusY, opacity) {
   context2d.restore();
 }
 
+function drawAsteroidBelt(context2d, x, y, radiusX, radiusY, opacity) {
+  if (opacity <= 0) return;
+  context2d.save();
+  context2d.globalAlpha = opacity;
+  context2d.fillStyle = "rgba(196, 190, 174, 0.5)";
+  for (let index = 0; index < 180; index += 1) {
+    const angle = index * 2.39996 + seededNoise(index, 61) * 0.08;
+    const scatter = 0.91 + seededNoise(index, 62) * 0.18;
+    const point = orbitPoint(x, y, radiusX * scatter, radiusY * scatter, angle);
+    const size = 0.24 + seededNoise(index, 63) * 0.42;
+    context2d.beginPath();
+    context2d.arc(point.x, point.y, size, 0, Math.PI * 2);
+    context2d.fill();
+  }
+  context2d.restore();
+}
+
 function orbitPoint(centerX, centerY, radiusX, radiusY, angle) {
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
@@ -754,6 +771,24 @@ function drawJourney(progress) {
   const outerOrbitScale = mix(0.86, 1, outerReveal) * stellarSystemScale;
   const outerNameOpacity = smoothstep(range(solarProgress, 0.9, 0.98)) *
     (1 - smoothstep(range(stellarProgress, 0.74, 0.84)));
+  const beltRadiusX = width * (mobile ? 0.165 : 0.15) * outerOrbitScale;
+  const beltRadiusY = height * (mobile ? 0.068 : 0.072) * outerOrbitScale;
+  drawAsteroidBelt(
+    journeyContext,
+    solarCenterX,
+    solarCenterY,
+    beltRadiusX,
+    beltRadiusY,
+    outerReveal * (1 - stellarPullback) * 0.52,
+  );
+  drawStarName(
+    journeyContext,
+    "MAIN ASTEROID BELT",
+    solarCenterX,
+    solarCenterY - beltRadiusY - 9,
+    outerNameOpacity * 0.72,
+    "center",
+  );
   const outerOrbits = [
     { name: "JUPITER", x: mobile ? 0.18 : 0.17, y: 0.085, angle: 3.62, radius: mobile ? 3.7 : 5.8, color: "#b99372", kind: "planet" },
     { name: "SATURN", x: mobile ? 0.27 : 0.26, y: 0.13, angle: 1.82, radius: mobile ? 3.3 : 5.1, color: "#c3ab79", kind: "saturn" },

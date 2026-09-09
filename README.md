@@ -27,7 +27,7 @@ Earth uses NASA Blue Marble imagery with inverse spherical projection, direction
 
 The 72-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
 
-The inner-system hold identifies Mercury, Venus, Earth, and Mars beside their plotted positions. The full Solar System hold then identifies Jupiter, Saturn, Uranus, and Neptune. Each label set fades before the next scale so the wider journey retains its sparse visual rhythm.
+The inner-system hold identifies Mercury, Venus, Earth, and Mars beside their plotted positions. The full Solar System hold then identifies Jupiter, Saturn, Uranus, and Neptune and resolves the main asteroid belt between the inner and outer planets. Each label set fades before the next scale so the wider journey retains its sparse visual rhythm.
 
 ## Navigation and access
 
