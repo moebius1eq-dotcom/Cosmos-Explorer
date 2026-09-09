@@ -893,8 +893,28 @@ function drawJourney(progress) {
 
   const localMarkerX = galaxyX + galaxyRadius * (mobile ? 0.38 : 0.42);
   const localMarkerY = galaxyY + galaxyRadius * 0.04;
-  drawDistantStar(journeyContext, localMarkerX, localMarkerY, 0.9, "rgba(126, 190, 218, 0.82)", galacticReveal * (1 - groupPullback));
-  drawStarName(journeyContext, "ORION SPUR · SUN", localMarkerX + 10, localMarkerY - 8, galacticReveal * (1 - groupPullback));
+  const galacticDetailOpacity = galacticReveal * (1 - groupPullback);
+  journeyContext.save();
+  journeyContext.globalAlpha = galacticDetailOpacity * 0.34;
+  journeyContext.strokeStyle = "rgba(174, 207, 218, 0.58)";
+  journeyContext.lineWidth = 0.7;
+  journeyContext.setLineDash([2, 7]);
+  journeyContext.beginPath();
+  journeyContext.moveTo(galaxyX, galaxyY);
+  journeyContext.lineTo(localMarkerX, localMarkerY);
+  journeyContext.stroke();
+  journeyContext.restore();
+  drawStarName(journeyContext, "GALACTIC CENTER", galaxyX + 10, galaxyY - 10, galacticDetailOpacity * (mobile ? 0 : 0.78));
+  drawStarName(
+    journeyContext,
+    "≈ 26,000 LY",
+    mix(galaxyX, localMarkerX, 0.5),
+    mix(galaxyY, localMarkerY, 0.5) + 15,
+    galacticDetailOpacity * 0.68,
+    "center",
+  );
+  drawDistantStar(journeyContext, localMarkerX, localMarkerY, 0.9, "rgba(126, 190, 218, 0.82)", galacticDetailOpacity);
+  drawStarName(journeyContext, "ORION SPUR · SUN", localMarkerX + 10, localMarkerY - 8, galacticDetailOpacity);
 
   const andromedaX = mix(width * (mobile ? 0.68 : 0.7), groupPointX, webPullback);
   const andromedaY = mix(height * (mobile ? 0.39 : 0.4), groupPointY, webPullback);
