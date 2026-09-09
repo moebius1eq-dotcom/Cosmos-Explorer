@@ -14,6 +14,7 @@ const menuButton = document.querySelector(".menu-button");
 const scaleIndex = document.querySelector(".scale-index");
 const scaleIndexClose = document.querySelector(".scale-index__close");
 const scaleIndexLinks = [...document.querySelectorAll(".scale-index__list a")];
+const mainContent = document.querySelector("main");
 
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
@@ -34,6 +35,7 @@ function setScaleIndex(open) {
   scaleIndex.setAttribute("aria-hidden", String(!open));
   menuButton.setAttribute("aria-expanded", String(open));
   page.classList.toggle("index-open", open);
+  mainContent.inert = open;
   if (open) {
     const currentLink = scaleIndex.querySelector('[aria-current="true"]') || scaleIndexLinks[0];
     currentLink.focus();
@@ -45,7 +47,19 @@ function setScaleIndex(open) {
 menuButton.addEventListener("click", () => setScaleIndex(true));
 scaleIndexClose.addEventListener("click", () => setScaleIndex(false));
 window.addEventListener("keydown", event => {
-  if (event.key === "Escape" && scaleIndex.classList.contains("is-open")) setScaleIndex(false);
+  if (!scaleIndex.classList.contains("is-open")) return;
+  if (event.key === "Escape") {
+    setScaleIndex(false);
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [scaleIndexClose, ...scaleIndexLinks];
+  const current = focusable.indexOf(document.activeElement);
+  const next = event.shiftKey
+    ? (current <= 0 ? focusable.length - 1 : current - 1)
+    : (current === focusable.length - 1 ? 0 : current + 1);
+  event.preventDefault();
+  focusable[next].focus();
 });
 
 for (const link of scaleIndexLinks) {

@@ -26,6 +26,8 @@ The journey now continues without a section cut from the Earth-Moon system to a 
 
 The header index provides direct access to all eight observation scales. Selecting a destination maps to the corresponding point in the same continuous scroll timeline, and the current scale remains marked when the index is reopened.
 
+A semantic outline carries the same measurements and scale relationships for assistive technology, while the visual canvas remains decorative. The index contains keyboard focus while open and supports Escape to return to the journey.
+
 ## Run locally
 
 No packages or build tools are required. Open this cloned repository in VS Code and serve it with Live Server, or run `python -m http.server 8000` and open `http://localhost:8000`.
