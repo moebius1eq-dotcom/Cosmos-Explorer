@@ -721,21 +721,34 @@ function drawJourney(progress) {
   }
 
   const orbitOpacity = systemReveal * 0.62 * (1 - stellarPullback * 0.72);
+  const innerNameOpacity = smoothstep(range(innerProgress, 0.78, 0.88)) *
+    (1 - smoothstep(range(solarProgress, 0.72, 0.84)));
   const orbits = [
-    { x: 0.13, y: 0.055, angle: 3.85, radius: 1.05, color: "#aaa59b" },
-    { x: 0.23, y: 0.095, angle: 2.18, radius: 1.45, color: "#c5a16b" },
-    { x: mobile ? 0.39 : 0.34, y: mobile ? 0.12 : 0.15, angle: 0.12, radius: solarEarthRadius, color: "#75a9bf" },
-    { x: mobile ? 0.47 : 0.43, y: mobile ? 0.15 : 0.19, angle: 5.08, radius: 1.3, color: "#b86f50" },
+    { name: "MERCURY", x: 0.13, y: 0.055, angle: mobile ? 3.15 : 3.85, radius: 1.05, color: "#aaa59b" },
+    { name: "VENUS", x: 0.23, y: 0.095, angle: 2.18, radius: 1.45, color: "#c5a16b" },
+    { name: "EARTH", x: mobile ? 0.39 : 0.34, y: mobile ? 0.12 : 0.15, angle: 0.12, radius: solarEarthRadius, color: "#75a9bf" },
+    { name: "MARS", x: mobile ? 0.47 : 0.43, y: mobile ? 0.15 : 0.19, angle: 5.08, radius: 1.3, color: "#b86f50" },
   ];
 
   for (const orbit of orbits) {
     const orbitX = width * orbit.x * innerOrbitScale;
     const orbitY = height * orbit.y * innerOrbitScale;
     drawOrbit(journeyContext, solarCenterX, solarCenterY, orbitX, orbitY, orbitOpacity);
+    const planet = orbit.name === "EARTH"
+      ? { x: earthX, y: earthY }
+      : orbitPoint(solarCenterX, solarCenterY, orbitX, orbitY, orbit.angle);
     if (orbit.color !== "#75a9bf") {
-      const planet = orbitPoint(solarCenterX, solarCenterY, orbitX, orbitY, orbit.angle);
       drawPlanet(journeyContext, planet.x, planet.y, orbit.radius * bodyScale, orbit.color, systemReveal * galaxyScale);
     }
+    const labelOnLeft = orbit.name === "MERCURY";
+    drawStarName(
+      journeyContext,
+      orbit.name,
+      planet.x + (labelOnLeft ? -8 : 8),
+      planet.y - 8,
+      innerNameOpacity * systemReveal,
+      labelOnLeft ? "right" : "left",
+    );
   }
 
   const outerOrbitScale = mix(0.86, 1, outerReveal) * stellarSystemScale;
@@ -765,7 +778,7 @@ function drawJourney(progress) {
     journeyContext,
     solarCenterX,
     solarCenterY,
-    mix(height * 0.025, height * (mobile ? 0.075 : 0.09), systemReveal) * innerSystemScale,
+    mix(height * 0.025, height * (mobile ? 0.055 : 0.09), systemReveal) * innerSystemScale,
     smoothstep(range(innerProgress, 0.64, 0.79)),
   );
 
