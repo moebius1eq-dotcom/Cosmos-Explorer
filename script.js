@@ -91,7 +91,7 @@ function setScaleIndex(open) {
     const currentLink = scaleIndex.querySelector('[aria-current="true"]') || scaleIndexLinks[0];
     currentLink.focus();
   } else {
-    menuButton.focus();
+    (document.querySelector(".flight-scales:not([hidden])") || menuButton).focus();
   }
 }
 
@@ -666,6 +666,7 @@ function drawObservableUniverse(context2d, x, y, radius, opacity) {
 }
 
 function drawJourney(progress) {
+  if (window.renderCosmosFlight) { journeyObjects = []; window.renderCosmosFlight(progress); return; }
   journeyObjects = [];
   if (progress > 0.76) journeyObjects.push({ id: progress > 0.9 ? "universe" : "cosmic-web", x: innerWidth / 2, y: innerHeight / 2, radius: Math.min(innerWidth, innerHeight) * 0.35 });
   const width = window.innerWidth;
@@ -1191,3 +1192,8 @@ journeyViewport.addEventListener('click', event => {
   const object = objectAtPointer(event);
   if (object) location.href = (['milky-way','andromeda','cosmic-web','universe'].includes(object.id) ? 'deep-space.html#' : 'planets.html#') + object.id;
 });
+
+window.setFlightStops = function(enabled) {
+  const stops = enabled ? [.12,.27,.42,.565,.67,.79,.88,.99] : [.12,.20,.30,.39,.525,.655,.82,.99];
+  scaleIndexLinks.forEach((link,index) => { link.dataset.progress=stops[index]; journeyStages[index].progress=stops[index]; });
+};

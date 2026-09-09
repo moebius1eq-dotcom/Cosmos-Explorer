@@ -1,0 +1,149 @@
+import * as THREE from './vendor/three.module.js';
+
+// A perspective camera follows authored positions and look-at targets. Geometry
+// occupies actual depth; distances are composed for storytelling, not an ephemeris.
+const viewport = document.querySelector('.journey-viewport');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' }); }
+catch { console.info('WebGL unavailable: retaining the canvas journey.'); }
+if (renderer) initialize();
+
+function initialize() {
+  renderer.domElement.className = 'flight-canvas';
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  viewport.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.015,500000);
+  scene.add(new THREE.AmbientLight(0xb3c6e1,.32));
+  const light = new THREE.DirectionalLight(0xfff0d7,2.8); light.position.set(-30,25,40); scene.add(light);
+  const solar = new THREE.Group(); scene.add(solar);
+  const loader = new THREE.TextureLoader();
+  let progress = 0;
+  const textures = [];
+  function map(url) {
+    const texture = loader.load(url,()=>render(progress),undefined,()=>console.info('Texture unavailable:',url));
+    texture.colorSpace=THREE.SRGBColorSpace; texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); textures.push(texture); return texture;
+  }
+  const geometry = new THREE.SphereGeometry(1,96,64);
+  const bodies = {};
+  function body(id,radius,position,url,emissive=false) {
+    const texture=map(url);
+    const material=emissive ? new THREE.MeshBasicMaterial({map:texture}) : new THREE.MeshStandardMaterial({map:texture,roughness:1});
+    const mesh=new THREE.Mesh(geometry,material); mesh.scale.setScalar(radius); mesh.position.set(...position); mesh.userData={id,radius}; solar.add(mesh); bodies[id]=mesh; return mesh;
+  }
+  body('earth',1,[0,0,0],'assets/earth-blue-marble.jpg');
+  body('moon',.273,[3.4,.3,-1.2],'assets/moon-lroc.jpg');
+  body('sun',7,[-45,-3,-35],'assets/maps/sun.jpg',true);
+  body('mercury',.38,[-31,1,-26],'assets/maps/mercury.jpg');
+  body('venus',.95,[-18,-1,-12],'assets/maps/venus_atmosphere.jpg');
+  body('mars',.53,[16,2,-14],'assets/maps/mars.jpg');
+  body('jupiter',4,[45,-2,-38],'assets/maps/jupiter.jpg');
+  const saturn=body('saturn',3.3,[90,5,-70],'assets/maps/saturn.jpg');
+  body('uranus',1.8,[130,-7,-120],'assets/maps/uranus.jpg');
+  body('neptune',1.7,[165,3,-185],'assets/maps/neptune.jpg');
+  const ringGeometry = new THREE.RingGeometry(1.25,2.25,180,10);
+  const ring=new THREE.Mesh(ringGeometry,new THREE.ShaderMaterial({side:THREE.DoubleSide,transparent:true,depthWrite:false,
+    vertexShader:'varying vec2 p; void main(){p=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader:'varying vec2 p; void main(){float r=length(p);float band=0.58+0.2*sin(r*210.0)+0.12*sin(r*530.0);float gap=1.0-smoothstep(1.89,1.91,r)*(1.0-smoothstep(1.96,1.98,r));float edge=smoothstep(1.25,1.38,r)*(1.0-smoothstep(2.18,2.25,r));gl_FragColor=vec4(vec3(0.66,0.59,0.46)*band,edge*gap*0.72);}'
+  }));
+  ring.rotation.x=-Math.PI/2; saturn.add(ring);saturn.rotation.z=.42;
+  const atmosphere=new THREE.Mesh(geometry,new THREE.ShaderMaterial({transparent:true,side:THREE.BackSide,depthWrite:false,blending:THREE.AdditiveBlending,
+    vertexShader:'varying vec3 n; varying vec3 v; void main(){vec4 p=modelViewMatrix*vec4(position,1.0); n=normalize(normalMatrix*normal); v=normalize(-p.xyz); gl_Position=projectionMatrix*p;}',
+    fragmentShader:'varying vec3 n; varying vec3 v; void main(){float rim=pow(1.0-abs(dot(normalize(n),normalize(v))),3.0); gl_FragColor=vec4(0.15,0.43,0.75,rim*0.45);}'
+  })); atmosphere.scale.setScalar(1.012);bodies.earth.add(atmosphere);
+  // Seeded particles make forward and reverse travel render the same universe.
+  let seed=721; const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=32;
+  const glowContext=glowCanvas.getContext('2d');const glow=glowContext.createRadialGradient(16,16,0,16,16,16);
+  glow.addColorStop(0,'#fff');glow.addColorStop(.2,'#ffffffc0');glow.addColorStop(1,'#ffffff00');glowContext.fillStyle=glow;glowContext.fillRect(0,0,32,32);
+  const starMap=new THREE.CanvasTexture(glowCanvas);
+  function points(count,generate,size) {
+    const vertices=[],colors=[];
+    for(let i=0;i<count;i++){const [x,y,z,w]=generate(i);vertices.push(x,y,z);colors.push(.55+w*.4,.65+w*.3,.8+w*.2);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+    const m=new THREE.PointsMaterial({size,map:starMap,vertexColors:true,transparent:true,opacity:.8,depthWrite:false,blending:THREE.AdditiveBlending});return new THREE.Points(g,m);
+  }
+  const stars=points(4500,()=>[(random()-.5)*180000,(random()-.5)*180000,(random()-.5)*180000,random()],18);scene.add(stars);
+  function galaxy(radius,count) {
+    const result = points(count,i=>{const core=i%4===0;const r=(core?Math.pow(random(),2)*.22:Math.pow(random(),.8))*radius;const angle=core?random()*Math.PI*2:r/radius*4.5+(i%3)*Math.PI*2/3+(random()-.5)*(i%5===0?6:1.6);return [Math.cos(angle)*r,(random()-.5)*radius*(core?.15:.05)*(1-r/radius),Math.sin(angle)*r,1-r/radius];},radius*.004);
+    const nucleus=new THREE.Sprite(new THREE.SpriteMaterial({map:starMap,color:0xe8ceb0,transparent:true,opacity:.5,depthWrite:false,blending:THREE.AdditiveBlending}));nucleus.scale.set(radius*.5,radius*.3,1);result.add(nucleus);return result;
+  }
+  const milky=galaxy(2200,24000);scene.add(milky);
+  const andromeda=galaxy(2800,17000);andromeda.position.set(8500,900,-5000);andromeda.rotation.set(.4,.3,.2);scene.add(andromeda);
+  const nodes=Array.from({length:65},()=>new THREE.Vector3((random()-.5)*54000,(random()-.5)*40000,(random()-.5)*54000));
+  const edges=[];
+  nodes.forEach((node,index)=>{nodes.map((other,j)=>({j,d:node.distanceTo(other)})).filter(x=>x.j!==index).sort((a,b)=>a.d-b.d).slice(0,3).forEach(({j})=>{if(j>index)edges.push([node,nodes[j]]);});});
+  const web=points(20000,i=>{const edge=edges[i%edges.length],t=random(),v=edge[0].clone().lerp(edge[1],t);const spread=i%5===0?1800:480;return [v.x+(random()-.5)*spread,v.y+(random()-.5)*spread,v.z+(random()-.5)*spread,random()];},50);scene.add(web);
+  const horizon = new THREE.Mesh(new THREE.SphereGeometry(47000,64,32),new THREE.ShaderMaterial({transparent:true,side:THREE.BackSide,depthWrite:false,
+    vertexShader:'varying vec3 n;varying vec3 v;void main(){vec4 p=modelViewMatrix*vec4(position,1.0);n=normalize(normalMatrix*normal);v=normalize(-p.xyz);gl_Position=projectionMatrix*p;}',
+    fragmentShader:'varying vec3 n;varying vec3 v;void main(){float edge=pow(1.0-abs(dot(normalize(n),normalize(v))),5.0);gl_FragColor=vec4(0.35,0.55,0.68,edge*0.13);}'
+  }));scene.add(horizon);
+  const keys=[];
+  const add=(p,id,pos,target,roll=0)=>keys.push({p,id,pos:new THREE.Vector3(...pos),target:new THREE.Vector3(...target),roll});
+  add(0,'earth',[0,.8,1.3],[0,.5,0],-.12);
+  add(.04,'earth',[1.6,.7,2.7],[0,0,0],.06);
+  add(.08,'earth',[-1,1.8,4.2],[0,0,0],.12);
+  add(.12,'moon',[4.2,.7,-.4],[3.4,.3,-1.2],-.1);
+  add(.15,'earth',[5,3,9],[1.2,0,0],0);
+  const visits=[['sun',.18],['mercury',.225],['venus',.27],['mars',.315],['jupiter',.365],['saturn',.42],['uranus',.475],['neptune',.525]];
+  visits.forEach(([id,p],index)=>{const mesh=bodies[id],r=mesh.userData.radius*(id==='saturn'?1.65:1),c=mesh.position;const side=index%2?1:-1;add(p-.012,id,[c.x+side*r*1.8,c.y+r*.85,c.z+r*3.2],c.toArray(),side*.08);add(p+.012,id,[c.x-side*r*1.3,c.y+r*1.3,c.z+r*3.5],c.toArray(),-side*.08);});
+  add(.565,'sun',[220,110,350],[0,0,0],.05);
+  add(.61,'milky-way',[0,850,2100],[0,0,0],-.18);
+  add(.67,'milky-way',[3200,2400,3600],[0,0,0],.12);
+  add(.73,'milky-way',[-2500,4100,6800],[0,0,0],.06);
+  add(.79,'andromeda',[10000,4500,2500],[8500,900,-5000],-.15);
+  add(.84,'cosmic-web',[11000,15000,21000],[2000,0,-1000],.14);
+  add(.91,'cosmic-web',[-16000,21000,48000],[0,0,0],-.12);
+  add(1,'universe',[18000,33000,105000],[0,0,0],0);
+  const path=new THREE.CatmullRomCurve3(keys.map(k=>k.pos),false,'centripetal');
+  const caption=document.createElement('div');caption.className='flight-caption';caption.innerHTML='<p>CAMERA FLIGHT / EARTH SYSTEM</p><h2>Earth</h2><a href="planets.html#earth">Explore Earth ↗</a>';viewport.append(caption);
+  const controls=document.createElement('div');controls.className='flight-controls';controls.innerHTML='<button class="flight-play">▶ Play flight</button><button class="flight-scales">Choose a stop</button><span>SCROLL TO FLY · CLICK + TO EXPLORE</span>';viewport.append(controls);
+  const marker=document.createElement('button');marker.className='flight-marker';marker.textContent='+';viewport.append(marker);
+  let id='earth',running=false,raf=0,last=0;
+  const title=caption.querySelector('h2'),link=caption.querySelector('a');
+  const names={'milky-way':'The Milky Way','cosmic-web':'The cosmic web',universe:'The observable universe'};
+  const href=value=>(['milky-way','andromeda','cosmic-web','universe'].includes(value)?'deep-space.html#':'planets.html#')+value;
+  marker.addEventListener('click',()=>location.href=href(id));
+  controls.querySelector('.flight-scales').addEventListener('click',()=>{pause();document.querySelector('.menu-button').click();});
+  const play=controls.querySelector('.flight-play');
+  function pause(){running=false;cancelAnimationFrame(raf);play.textContent='▶ Play flight';play.setAttribute('aria-pressed','false');}
+  function tick(now){if(!running)return;const dt=Math.min(now-last,50);last=now;const departure=document.querySelector('.departure');const total=departure.offsetHeight-innerHeight;const p=Math.max(0,(scrollY-departure.offsetTop)/total)+dt/210000;scrollTo({top:departure.offsetTop+Math.min(1,p)*total,behavior:'instant'});if(p>=1)pause();else raf=requestAnimationFrame(tick);}
+  play.setAttribute('aria-pressed','false');play.addEventListener('click',()=>{if(running){pause();return;}running=true;last=performance.now();play.textContent='Ⅱ Pause flight';play.setAttribute('aria-pressed','true');raf=requestAnimationFrame(tick);});
+  ['wheel','touchstart','keydown'].forEach(event=>window.addEventListener(event,pause,{passive:true}));
+  document.addEventListener('visibilitychange',pause);
+  document.addEventListener('click',event=>{if(event.target.closest('.burger'))pause();});
+  function render(p) {
+    progress=p;
+    let index=keys.findIndex(k=>k.p>=p);if(index<1)index=1;
+    const a=keys[index-1],b=keys[index];const t=THREE.MathUtils.clamp((p-a.p)/(b.p-a.p),0,1);const ease=t*t*(3-2*t);
+    camera.position.copy(path.getPoint((index-1+t)/(keys.length-1)));
+    const target=a.target.clone().lerp(b.target,ease);
+    // Increase camera stand-off only for narrow screens to preserve whole subjects.
+    if(innerWidth<700)camera.position.sub(target).multiplyScalar(1.45).add(target);
+    camera.up.set(Math.sin(THREE.MathUtils.lerp(a.roll,b.roll,ease)),1,0);camera.lookAt(target);
+    id=t<.5?a.id:b.id;
+    Object.values(bodies).forEach((mesh,i)=>{mesh.rotation.y=p*(i%2?1:-1)*1.6;});
+    const shrink=1-THREE.MathUtils.smoothstep(p,.55,.62);solar.scale.setScalar(Math.max(.001,shrink));
+    milky.visible=p>.55;andromeda.visible=p>.69;web.visible=p>.8;horizon.visible=p>.93;
+    milky.material.opacity=THREE.MathUtils.smoothstep(p,.55,.61)*.85;
+    web.material.opacity=THREE.MathUtils.smoothstep(p,.8,.88)*.65;
+    const name=names[id]||id[0].toUpperCase()+id.slice(1);
+    title.textContent=name;caption.querySelector('p').textContent=p<.55?'WORLDS / PERSPECTIVE FLIGHT':'BEYOND / A CHANGE OF SCALE';link.textContent=`Explore ${name} ↗`;link.href=href(id);
+    marker.setAttribute('aria-label',`Explore ${name}`);
+    const point=(bodies[id]?bodies[id].getWorldPosition(new THREE.Vector3()):id==='andromeda'?andromeda.position.clone():new THREE.Vector3()).project(camera);
+    marker.style.left=`${THREE.MathUtils.clamp((point.x*.5+.5)*innerWidth,45,innerWidth-45)}px`;marker.style.top=`${THREE.MathUtils.clamp((-point.y*.5+.5)*innerHeight,100,innerHeight-240)}px`;
+    renderer.render(scene,camera);
+    viewport.dataset.subject=id;
+  }
+  window.setFlightStops?.(true);
+  window.renderCosmosFlight=render;
+  document.body.classList.add('has-flight');render(0);
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);render(progress);});
+  renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();pause();delete window.renderCosmosFlight;window.setFlightStops?.(false);document.body.classList.remove('has-flight');renderer.domElement.hidden=true;caption.hidden=true;controls.hidden=true;marker.hidden=true;window.dispatchEvent(new Event('scroll'));});
+  // Expose only camera samples for deterministic path checks, not scene controls.
+  window.cosmosFlightState=()=>({progress,subject:id,camera:camera.position.toArray(),target:keys.find(k=>k.id===id)?.target.toArray()});
+  if(location.hash) { const stop=[...document.querySelectorAll('.scale-index__list a')].find(a=>a.hash===location.hash);if(stop){const d=document.querySelector('.departure');scrollTo({top:d.offsetTop+(d.offsetHeight-innerHeight)*Number(stop.dataset.progress),behavior:'instant'});} }
+  window.dispatchEvent(new Event('scroll'));
+}

@@ -8,7 +8,7 @@ Cosmos Explorer is an interactive astronomy experience built around cinematic sc
 
 ## Current experience
 
-The site is one continuous, reversible camera journey across eight observation scales:
+The site includes a perspective 3D camera flight, a planet atlas, a deep-space atlas and an observatory page. The journey spans these observation scales:
 
 1. Earth and Moon
 2. Inner Solar System
@@ -31,7 +31,7 @@ The Milky Way hold marks the galactic center and connects it to the Sun in the O
 
 The Local Group hold places the Milky Way beside Andromeda and Triangulum, with the Large and Small Magellanic Clouds retained as named Milky Way satellites. Additional dwarf galaxies remain unlabeled to preserve the group scale without filling the frame with interface text.
 
-The 72-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
+The 42-viewport timeline gives the opening Earth departure the most weight before gradually accelerating. Planet diameters retain meaningful relative relationships where legible, while separations and later structures are composed for clarity rather than presented as a literal spatial map.
 
 The inner-system hold identifies Mercury, Venus, Earth, and Mars beside their plotted positions. The full Solar System hold then identifies Jupiter, Saturn, Uranus, and Neptune and resolves the main asteroid belt between the inner and outer planets. Each label set fades before the next scale so the wider journey retains its sparse visual rhythm.
 
@@ -43,7 +43,7 @@ A semantic outline exposes the same scale relationships and measurements to assi
 
 ## Rendering
 
-The experience uses HTML, CSS, and Canvas 2D with no framework or build step. Planetary and procedural textures are cached before scrolling, canvas updates are synchronized to display frames, and deterministic stars remain stable across resizing. Animation pauses while the page is hidden.
+The experience uses HTML, CSS, vanilla JavaScript and a locally vendored Three.js 0.170.0 renderer with no build step. The earlier Canvas 2D journey remains available when WebGL is unavailable. Planetary and procedural textures are cached before scrolling, canvas updates are synchronized to display frames, and deterministic stars remain stable across resizing. Animation pauses while the page is hidden.
 
 The first-visit loader waits for both its minimum cinematic duration and planetary surface preparation. If an image is unavailable, shaded fallback spheres keep the journey usable.
 
@@ -99,3 +99,20 @@ Earth now uses the 8192×4096 NASA source from the existing SVS attribution abov
 Other planet close-ups are locally stored NASA mission images; exact image URLs and reference pages are in `assets/atlas-sources.json`. Images retain their mission processing and are not to a shared scale. The Sun and deep-space atlas visuals are explicitly schematic. Physical values are approximate; planetary parameters follow [NASA/JPL physical parameters](https://ssd.jpl.nasa.gov/planets/phys_par.html). Gravity for giant planets uses a reference atmospheric level. Mass is used instead of weight because weight depends on the local gravitational field.
 
 New files: `planets.html`, `deep-space.html`, `atlas.css`, `atlas.js`, `objects.json`, and `momentum.js`. The site still needs no framework, dependency installation or build step.
+
+
+## Perspective camera flight
+
+`flight.js` renders textured spherical planets, Saturn's rings, a volumetric stellar disk and a 3D filament network. Authored camera positions follow a centripetal Catmull–Rom path; look-at targets and camera roll change between observation stops. Earth and each of the eight planets receive close passes before the camera climbs above the galactic plane. The Solar System contracts during the transition to the galaxy. This is a composed sequence; sizes and distances are intentionally compressed.
+
+Scroll remains reversible. Play flight advances along the same path over about three and a half minutes; Pause, wheel input, touch, keyboard input, opening navigation or hiding the page stops playback. Reduced-motion mode bypasses wheel momentum; playback starts only when explicitly requested. The persistent object title, Explore link and + marker make inspection discoverable and keyboard accessible. Graphics initialization failure or context loss retains the earlier canvas experience.
+
+The shared hamburger menu (`navigation.js`, `navigation.css`) connects Journey, Planet atlas, Deep space and The observatory. All pages share Inter typography. `observatory.html` documents interaction, scientific interpretation and asset credits.
+
+### New dependencies and credits
+
+- Three.js 0.170.0 is stored in `vendor/three.module.js`; MIT license in `vendor/three.LICENSE`.
+- Mercury, Venus atmosphere, Mars, Jupiter, Saturn, Uranus, Neptune and Sun maps: [Solar System Scope](https://www.solarsystemscope.com/textures/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Local files in `assets/maps/` use the site's `textures/download/2k_NAME.jpg` originals. Maps are applied to lit geometry without recoloring. The source includes artistic reconstruction where measured coverage is missing. Credits are also visible on the Observatory page.
+- Earth and Moon retain the NASA maps credited above. Saturn's ring shading, galaxies and cosmic-web filaments are procedural illustrations.
+
+Verification for this revision covered deterministic forward/reverse camera samples, play/pause, menu Escape/focus, scale navigation, mobile framing, object links, all separate pages and context-loss fallback. Browser rendering was checked using software WebGL; smoothness on the user's GPU and mouse remains an important local review.

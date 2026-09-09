@@ -1,0 +1,13 @@
+.flight-canvas { position:absolute; inset:0; width:100%; height:100%; z-index:1; }
+.has-flight .journey-canvas,.has-flight .journey-viewport > .scale-label,.has-flight .journey-viewport > [class$="__copy"],.has-flight .departure__guide,.has-flight .journey-progress,.has-flight .journey-reset { visibility:hidden; }
+.flight-caption { position:absolute; z-index:4; left:var(--page-padding); bottom:95px; max-width:600px; pointer-events:none; }
+.flight-caption p { font-size:10px; letter-spacing:.2em; color:#acb9c2; text-transform:uppercase; }
+.flight-caption h2 { margin:12px 0 20px; font-weight:300; letter-spacing:-.04em; font-size:clamp(36px,5vw,72px); text-shadow:0 2px 20px #000; }
+.flight-caption a { pointer-events:auto; display:inline-block; padding:12px 0; border-bottom:1px solid #b9ccd8; font-size:11px; letter-spacing:.08em; }
+.flight-controls { position:absolute; bottom:24px; left:var(--page-padding); right:var(--page-padding); z-index:5; display:flex; gap:25px; align-items:center; border-top:1px solid #ffffff26; padding-top:18px; }
+.flight-controls button { background:none; border:0; color:#e9ede8; font:inherit; font-size:11px; cursor:pointer; padding:8px 0; }
+.flight-controls span { margin-left:auto; font-size:9px; color:#afb8bc; letter-spacing:.12em; }
+.flight-marker { position:absolute; z-index:3; width:32px; height:32px; border-radius:50%; border:1px solid #d7e1e890; background:#03040550; color:#fff; font-size:20px; cursor:pointer; transform:translate(-50%,-50%); }
+@media(max-width:600px) { .flight-caption { bottom:108px; } .flight-caption h2 { font-size:36px; } .flight-controls { gap:20px; } .flight-controls span { max-width:110px; line-height:1.6; } }
+
+.has-flight .journey-viewport > :not(.flight-canvas):not(.flight-caption):not(.flight-controls):not(.flight-marker) { visibility:hidden; }

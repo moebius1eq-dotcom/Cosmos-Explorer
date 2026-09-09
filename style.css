@@ -398,7 +398,7 @@ body.is-ready .scroll-cue {
 .departure {
   position: relative;
   z-index: 2;
-  height: 7200svh;
+  height: 4200svh;
   background: transparent;
 }
 
