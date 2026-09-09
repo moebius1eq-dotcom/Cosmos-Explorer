@@ -28,6 +28,8 @@ The header index provides direct access to all eight observation scales. Selecti
 
 A semantic outline carries the same measurements and scale relationships for assistive technology, while the visual canvas remains decorative. The index contains keyboard focus while open and supports Escape to return to the journey.
 
+Canvas updates are synchronized to display frames during scrolling and resizing. The background stars use deterministic positions, so changing viewport size or device orientation does not regenerate the sky, and animation pauses while the page is hidden.
+
 ## Run locally
 
 No packages or build tools are required. Open this cloned repository in VS Code and serve it with Live Server, or run `python -m http.server 8000` and open `http://localhost:8000`.

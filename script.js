@@ -20,6 +20,8 @@ const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
 let stars = [];
 let animationFrame = 0;
+let scrollFrame = 0;
+let resizeFrame = 0;
 let pixelRatio = 1;
 let journeyPixelRatio = 1;
 let currentJourneyProgress = 0;
@@ -97,15 +99,15 @@ const loadingStates = [
 ];
 
 function createStar(index) {
-  const depth = Math.random();
+  const depth = seededNoise(index, 11);
 
   return {
-    x: Math.random(),
-    y: Math.random(),
+    x: seededNoise(index, 12),
+    y: seededNoise(index, 13),
     radius: 0.25 + depth * 0.9,
     alpha: 0.14 + depth * 0.62,
     depth: 0.15 + depth * 0.85,
-    phase: index * 0.61,
+    phase: seededNoise(index, 14) * Math.PI * 2,
   };
 }
 
@@ -969,11 +971,21 @@ window.addEventListener("pointermove", (event) => {
 });
 
 window.addEventListener("resize", () => {
-  resizeStarfield();
-  resizeJourneyCanvas();
-  updateScrollScene();
+  if (resizeFrame) return;
+  resizeFrame = requestAnimationFrame(() => {
+    resizeFrame = 0;
+    resizeStarfield();
+    resizeJourneyCanvas();
+    updateScrollScene();
+  });
 }, { passive: true });
-window.addEventListener("scroll", updateScrollScene, { passive: true });
+window.addEventListener("scroll", () => {
+  if (scrollFrame) return;
+  scrollFrame = requestAnimationFrame(() => {
+    scrollFrame = 0;
+    updateScrollScene();
+  });
+}, { passive: true });
 
 motionQuery.addEventListener("change", () => {
   cancelAnimationFrame(animationFrame);
