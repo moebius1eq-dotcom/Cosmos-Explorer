@@ -10,6 +10,7 @@ const journeyCanvas = document.querySelector(".journey-canvas");
 const journeyContext = journeyCanvas.getContext("2d", { alpha: true });
 const journeyProgressValue = document.querySelector(".journey-progress__value");
 const journeyProgressStage = document.querySelector(".journey-progress__stage");
+const journeyReset = document.querySelector(".journey-reset");
 const menuButton = document.querySelector(".menu-button");
 const scaleIndex = document.querySelector(".scale-index");
 const scaleIndexClose = document.querySelector(".scale-index__close");
@@ -109,6 +110,12 @@ for (const link of scaleIndexLinks) {
     scrollToScale(link);
   });
 }
+
+journeyReset.addEventListener("click", event => {
+  event.preventDefault();
+  history.pushState(null, "", journeyReset.hash);
+  scrollToScale(journeyReset);
+});
 
 window.addEventListener("popstate", () => restoreLocationScale());
 window.addEventListener("load", () => restoreLocationScale("auto"), { once: true });
@@ -919,6 +926,7 @@ function updateScrollScene() {
   const universeCopyOpacity = smoothstep(range(departureProgress, 0.84, 0.89)) *
     (1 - smoothstep(range(departureProgress, 0.92, 0.96)));
   const universeLabelOpacity = smoothstep(range(departureProgress, 0.94, 0.99));
+  const journeyResetOpacity = smoothstep(range(departureProgress, 0.975, 0.995));
 
   heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
   heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0) scale(${1 - heroProgress * 0.08})`;
@@ -942,6 +950,11 @@ function updateScrollScene() {
   journeyViewport.style.setProperty("--laniakea-label-opacity", laniakeaLabelOpacity.toFixed(3));
   journeyViewport.style.setProperty("--universe-copy-opacity", universeCopyOpacity.toFixed(3));
   journeyViewport.style.setProperty("--universe-label-opacity", universeLabelOpacity.toFixed(3));
+  journeyViewport.style.setProperty("--journey-reset-opacity", journeyResetOpacity.toFixed(3));
+  const resetActive = journeyResetOpacity > 0.5;
+  journeyReset.classList.toggle("is-active", resetActive);
+  journeyReset.setAttribute("aria-hidden", String(!resetActive));
+  journeyReset.tabIndex = resetActive ? 0 : -1;
   journeyViewport.style.setProperty("--guide-opacity", mix(0.1, 0.32, copyEntrance).toFixed(3));
   journeyViewport.style.setProperty("--journey-ui-opacity", smoothstep(range(departureProgress, 0.15, 0.3)).toFixed(3));
   journeyProgressValue.textContent = String(Math.round(departureProgress * 100)).padStart(3, "0");

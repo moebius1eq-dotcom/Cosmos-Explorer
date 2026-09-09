@@ -734,6 +734,38 @@ body.index-open {
   opacity: var(--universe-label-opacity, 0);
 }
 
+.journey-reset {
+  position: absolute;
+  z-index: 4;
+  left: var(--page-padding);
+  bottom: 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(240, 241, 238, 0.62);
+  font-size: 0.57rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  opacity: var(--journey-reset-opacity, 0);
+  transform: translateX(calc((1 - var(--journey-reset-opacity, 0)) * 0.8rem));
+  pointer-events: none;
+}
+
+.journey-reset.is-active {
+  pointer-events: auto;
+}
+
+.journey-reset span {
+  color: var(--accent);
+  font-size: 0.85rem;
+  transition: transform 180ms ease;
+}
+
+.journey-reset:hover span,
+.journey-reset:focus-visible span {
+  transform: translateX(-0.25rem);
+}
+
 .scale-label__name,
 .scale-label__distance {
   color: var(--white);
