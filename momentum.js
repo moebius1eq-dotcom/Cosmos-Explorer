@@ -21,7 +21,7 @@
     const delta = event.deltaY * (event.deltaMode === 1 ? 24 : event.deltaMode === 2 ? innerHeight : 1);
     // Reversing the wheel immediately cancels the previous direction's momentum.
     if (Math.sign(delta) !== Math.sign(target - scrollY)) target = scrollY;
-    target = Math.max(0, Math.min(target + delta * 2.8, document.documentElement.scrollHeight - innerHeight));
+    target = Math.max(0, Math.min(target + delta * 2.0, document.documentElement.scrollHeight - innerHeight));
     if (!frame) { previous = performance.now(); frame = requestAnimationFrame(advance); }
   }, { passive: false });
   ['pointerdown', 'touchstart', 'keydown', 'popstate', 'resize'].forEach(type => window.addEventListener(type, stop, { passive: true }));

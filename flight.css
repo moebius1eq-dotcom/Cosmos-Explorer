@@ -10,4 +10,12 @@
 .flight-marker { position:absolute; z-index:3; width:32px; height:32px; border-radius:50%; border:1px solid #d7e1e890; background:#03040550; color:#fff; font-size:20px; cursor:pointer; transform:translate(-50%,-50%); }
 @media(max-width:600px) { .flight-caption { bottom:108px; } .flight-caption h2 { font-size:36px; } .flight-controls { gap:20px; } .flight-controls span { max-width:110px; line-height:1.6; } }
 
-.has-flight .journey-viewport > :not(.flight-canvas):not(.flight-caption):not(.flight-controls):not(.flight-marker) { visibility:hidden; }
+.has-flight .journey-viewport > :not(.flight-canvas):not(.flight-caption):not(.flight-controls):not(.flight-marker):not(.flight-annotation) { visibility:hidden; }
+
+/* One subordinate measurement at a time, above the object rather than its title. */
+.flight-annotation { position:absolute; z-index:3; top:115px; right:var(--page-padding); max-width:340px; text-align:right; pointer-events:none; opacity:0; }
+.flight-annotation strong { display:block; font-size:12px; font-weight:400; letter-spacing:.12em; color:#c1c9cc; }
+.flight-annotation span { display:block; font-size:9px; line-height:1.6; letter-spacing:.1em; color:#818d94; margin-top:8px; }
+.flight-caption p,.flight-controls span { line-height:1.6; }
+.flight-caption a,.flight-controls { border-color:rgba(200,214,223,.3); }
+@media(max-width:600px) { .flight-annotation { top:100px; max-width:280px; } .flight-annotation strong { font-size:10px; } .flight-annotation span { font-size:8px; } }

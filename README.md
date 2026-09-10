@@ -105,7 +105,7 @@ New files: `planets.html`, `deep-space.html`, `atlas.css`, `atlas.js`, `objects.
 
 `flight.js` renders textured spherical planets, Saturn's rings, a volumetric stellar disk and a 3D filament network. Authored camera positions follow a centripetal Catmull–Rom path; look-at targets and camera roll change between observation stops. Earth and each of the eight planets receive close passes before the camera climbs above the galactic plane. The Solar System contracts during the transition to the galaxy. This is a composed sequence; sizes and distances are intentionally compressed.
 
-Scroll remains reversible. Play flight advances along the same path over about three and a half minutes; Pause, wheel input, touch, keyboard input, opening navigation or hiding the page stops playback. Reduced-motion mode bypasses wheel momentum; playback starts only when explicitly requested. The persistent object title, Explore link and + marker make inspection discoverable and keyboard accessible. Graphics initialization failure or context loss retains the earlier canvas experience.
+Scroll remains reversible. Play flight advances along the same path over about four minutes; Pause, wheel input, touch, keyboard input, opening navigation or hiding the page stops playback. Reduced-motion mode bypasses wheel momentum; playback starts only when explicitly requested. The persistent object title, Explore link and + marker make inspection discoverable and keyboard accessible. Graphics initialization failure or context loss retains the earlier canvas experience.
 
 The shared hamburger menu (`navigation.js`, `navigation.css`) connects Journey, Planet atlas, Deep space and The observatory. All pages share Inter typography. `observatory.html` documents interaction, scientific interpretation and asset credits.
 
@@ -116,3 +116,8 @@ The shared hamburger menu (`navigation.js`, `navigation.css`) connects Journey, 
 - Earth and Moon retain the NASA maps credited above. Saturn's ring shading, galaxies and cosmic-web filaments are procedural illustrations.
 
 Verification for this revision covered deterministic forward/reverse camera samples, play/pause, menu Escape/focus, scale navigation, mobile framing, object links, all separate pages and context-loss fallback. Browser rendering was checked using software WebGL; smoothness on the user's GPU and mouse remains an important local review.
+
+
+## Refinement audit
+
+The existing journey now uses more distinct stellar populations, irregular galaxy density and dust attenuation, variable filament structure, longer reveal intervals and sparse source-checked measurements. It renders only changed frames and pauses the legacy starfield during the 3D journey. See [the refinement audit](docs/journey-refinement.md) for sources, pacing review, performance measurements and limitations. JOURNEY, PLANETS, DEEP SPACE and the object atlas remain available.

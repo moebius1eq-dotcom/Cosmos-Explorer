@@ -993,6 +993,11 @@ function drawJourney(progress) {
 }
 
 function drawStarfield(time = 0) {
+  animationFrame = 0;
+  if (document.hidden || (window.renderCosmosFlight && window.scrollY >= departure.offsetTop)) {
+    context.clearRect(0,0,window.innerWidth,window.innerHeight);
+    return;
+  }
   context.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
   pointer.x += (pointer.targetX - pointer.x) * 0.025;
@@ -1024,6 +1029,17 @@ function updateScrollScene() {
   const departureTop = departure.offsetTop;
   const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
+  if (window.renderCosmosFlight) {
+    currentJourneyProgress = departureProgress;
+    heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
+    heroContent.style.transform = `translate3d(0, ${heroProgress * -6}vh, 0)`;
+    const currentIndex=getCurrentScaleIndex(departureProgress);
+    scaleIndexLinks.forEach((link,index)=>{if(index===currentIndex)link.setAttribute('aria-current','true');else link.removeAttribute('aria-current');});
+    window.renderCosmosFlight(departureProgress);
+    if(!animationFrame && window.scrollY<departureTop) animationFrame=requestAnimationFrame(drawStarfield);
+    return;
+  }
+
   const webProgress = clamp(departureProgress / 0.84);
   const groupProgress = clamp(webProgress / 0.8);
   const galacticProgress = clamp(groupProgress / 0.8);
@@ -1194,6 +1210,6 @@ journeyViewport.addEventListener('click', event => {
 });
 
 window.setFlightStops = function(enabled) {
-  const stops = enabled ? [.12,.27,.42,.565,.67,.79,.88,.99] : [.12,.20,.30,.39,.525,.655,.82,.99];
+  const stops = enabled ? [.12,.27,.42,.565,.69,.81,.90,.99] : [.12,.20,.30,.39,.525,.655,.82,.99];
   scaleIndexLinks.forEach((link,index) => { link.dataset.progress=stops[index]; journeyStages[index].progress=stops[index]; });
 };

@@ -193,7 +193,7 @@
     "kind": "Observable region",
     "description": "The region whose light has had time to reach us. Its horizon is an observational limit, not a physical wall.",
     "facts": {
-      "Diameter today": "≈ 93 billion light-years",
+      "Diameter today": "≈ 92 billion light-years",
       "Cosmic age": "≈ 13.8 billion years"
     },
     "source": "https://science.nasa.gov/universe/overview/",
