@@ -99,7 +99,7 @@ function setScaleIndex(open) {
     const currentLink = scaleIndex.querySelector('[aria-current="true"]') || scaleIndexLinks[0];
     currentLink.focus();
   } else {
-    (document.querySelector(".flight-scales:not([hidden])") || menuButton).focus();
+    (page.classList.contains("has-flight") ? document.querySelector(".flight-scales") : document.querySelector(".burger") || menuButton).focus();
   }
 }
 

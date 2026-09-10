@@ -159,7 +159,13 @@ function initialize() {
   function pause(){running=false;cancelAnimationFrame(raf);play.textContent=progress>=.999?'↻ Replay flight':'▶ Play flight';play.setAttribute('aria-pressed','false');}
   function tick(now){if(!running)return;const dt=Math.min(now-last,50);last=now;const departure=document.querySelector('.departure');const total=departure.offsetHeight-innerHeight;const p=Math.max(0,(scrollY-departure.offsetTop)/total)+dt/240000;scrollTo({top:departure.offsetTop+Math.min(1,p)*total,behavior:'instant'});if(p>=1)pause();else raf=requestAnimationFrame(tick);}
   play.setAttribute('aria-pressed','false');play.addEventListener('click',()=>{if(running){pause();return;}if(progress>=.999){const departure=document.querySelector('.departure');scrollTo({top:departure.offsetTop,behavior:'instant'});render(0);}running=true;last=performance.now();play.textContent='Ⅱ Pause flight';play.setAttribute('aria-pressed','true');raf=requestAnimationFrame(tick);});
-  ['wheel','touchstart','keydown'].forEach(event=>window.addEventListener(event,pause,{passive:true}));
+  window.addEventListener('wheel',pause,{passive:true});
+  window.addEventListener('touchstart',event=>{if(!event.target.closest('.flight-play'))pause();},{passive:true});
+  window.addEventListener('keydown',event=>{
+    // Let native button activation toggle playback exactly once.
+    if(event.target===play && (event.key===' ' || event.key==='Enter')) return;
+    pause();
+  });
   document.addEventListener('visibilitychange',()=>{pause();if(!document.hidden)render(progress,true);});
   document.addEventListener('click',event=>{if(event.target.closest('.burger'))pause();});
   function render(p,force=false) {
