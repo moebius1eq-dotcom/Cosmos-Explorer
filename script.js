@@ -31,6 +31,7 @@ let locationSyncTimer = 0;
 let pixelRatio = 1;
 let journeyPixelRatio = 1;
 let currentJourneyProgress = 0;
+let sceneLayout = { width:innerWidth, height:innerHeight, top:departure.offsetTop, scroll:scrollY, progress:0 };
 let journeyObjects = [];
 let earthTexture = null;
 let moonTexture = null;
@@ -1036,6 +1037,7 @@ function updateScrollScene() {
   const departureTop = departure.offsetTop;
   const journeyLength = Math.max(departure.offsetHeight - viewport, 1);
   const departureProgress = clamp((window.scrollY - departureTop) / journeyLength);
+  sceneLayout = { width:innerWidth, height:innerHeight, top:departureTop, scroll:scrollY, progress:departureProgress };
   if (window.renderCosmosFlight) {
     currentJourneyProgress = departureProgress;
     heroContent.style.opacity = `${1 - heroProgress * 1.15}`;
@@ -1167,14 +1169,23 @@ window.addEventListener("pointermove", (event) => {
 
 window.addEventListener("resize", () => {
   if (resizeFrame) return;
+  const previous = sceneLayout;
   resizeFrame = requestAnimationFrame(() => {
     resizeFrame = 0;
     resizeStarfield();
     resizeJourneyCanvas();
+    const inJourney = previous.scroll >= previous.top;
+    const target = inJourney
+      ? departure.offsetTop + previous.progress * Math.max(departure.offsetHeight - innerHeight, 1)
+      : previous.scroll / Math.max(previous.height, 1) * innerHeight;
+    window.scrollTo({top:target, behavior:'instant'});
     updateScrollScene();
   });
 }, { passive: true });
 window.addEventListener("scroll", () => {
+  // Resizing can emit a scroll event before the resize frame. Preserve the last
+  // settled layout until its normalized camera position has been restored.
+  if (innerWidth !== sceneLayout.width || innerHeight !== sceneLayout.height) return;
   window.clearTimeout(locationSyncTimer);
   locationSyncTimer = window.setTimeout(syncLocationToScroll, 220);
   if (scrollFrame) return;

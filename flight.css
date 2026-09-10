@@ -19,3 +19,14 @@
 .flight-caption p,.flight-controls span { line-height:1.6; }
 .flight-caption a,.flight-controls { border-color:rgba(200,214,223,.3); }
 @media(max-width:600px) { .flight-annotation { top:100px; max-width:280px; } .flight-annotation strong { font-size:10px; } .flight-annotation span { font-size:8px; } }
+
+@media (max-height:500px) and (min-width:700px) {
+  .flight-caption { bottom:72px; max-width:calc(100% - 355px); }
+  .flight-caption h2 { font-size:32px; margin:6px 0 10px; }
+  .flight-caption p { margin:6px 0; font-size:9px; }
+  .flight-caption a { padding:8px 0; }
+  .flight-annotation { top:88px; max-width:270px; }
+  .flight-annotation strong { font-size:10px; }
+  .flight-annotation span { font-size:8px; }
+  .flight-controls { bottom:14px; padding-top:10px; }
+}

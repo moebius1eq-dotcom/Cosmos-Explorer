@@ -124,3 +124,5 @@ The existing journey now uses more distinct stellar populations, irregular galax
 
 
 Journey history preserves the exact camera position when opening an atlas entry or reloading. A contextual **Return to journey** link appears in the atlas after a journey visit, using a normalized progress fragment that also survives viewport changes. Fresh home navigation still starts at the hero. Session storage is optional; ordinary navigation remains usable when storage is unavailable.
+
+Window resizing and phone rotation preserve normalized journey progress in both the 3D and fallback renderers. Short landscape screens use a compact caption layout to keep object titles separate from measurements.
