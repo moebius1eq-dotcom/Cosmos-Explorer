@@ -121,3 +121,6 @@ Verification for this revision covered deterministic forward/reverse camera samp
 ## Refinement audit
 
 The existing journey now uses more distinct stellar populations, irregular galaxy density and dust attenuation, variable filament structure, longer reveal intervals and sparse source-checked measurements. It renders only changed frames and pauses the legacy starfield during the 3D journey. See [the refinement audit](docs/journey-refinement.md) for sources, pacing review, performance measurements and limitations. JOURNEY, PLANETS, DEEP SPACE and the object atlas remain available.
+
+
+Journey history preserves the exact camera position when opening an atlas entry or reloading. A contextual **Return to journey** link appears in the atlas after a journey visit, using a normalized progress fragment that also survives viewport changes. Fresh home navigation still starts at the hero. Session storage is optional; ordinary navigation remains usable when storage is unavailable.

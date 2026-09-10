@@ -6,6 +6,17 @@
   const ctx = canvas.getContext('2d');
   const dialog = document.querySelector('dialog');
   let objects = [], current = 0;
+  try {
+    const stored = sessionStorage.getItem('cosmos-journey-position');
+    const position = stored === null ? NaN : Number(stored);
+    if (Number.isFinite(position) && position >= 0 && position <= 1) {
+      const resume = document.createElement('a');
+      resume.className = 'object-return';
+      resume.href = `index.html#flight=${position.toFixed(6)}`;
+      resume.textContent = '← Return to journey';
+      document.querySelector('.atlas-intro').after(resume);
+    }
+  } catch { /* The atlas does not require session storage. */ }
   const atlasControls = [visual, ...document.querySelectorAll('.object-controls button')];
   atlasControls.forEach(button => button.disabled = true);
   document.querySelector('.observation').setAttribute('aria-busy','true');

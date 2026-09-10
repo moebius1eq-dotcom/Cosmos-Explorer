@@ -213,6 +213,6 @@ function initialize() {
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();pause();delete window.renderCosmosFlight;window.setFlightStops?.(false);document.body.classList.remove('has-flight');renderer.domElement.hidden=true;caption.hidden=true;controls.hidden=true;marker.hidden=true;annotation.hidden=true;window.dispatchEvent(new Event('scroll'));});
   // Read-only camera and render diagnostics for path and performance checks.
   window.cosmosFlightState=()=>({progress,renderCount,lastRenderMs,drawCalls:renderer.info.render.calls,points:renderer.info.render.points,triangles:renderer.info.render.triangles,subject:id,camera:camera.position.toArray(),target:keys.find(k=>k.id===id)?.target.toArray()});
-  if(location.hash) { const stop=[...document.querySelectorAll('.scale-index__list a')].find(a=>a.hash===location.hash);if(stop){const d=document.querySelector('.departure');scrollTo({top:d.offsetTop+(d.offsetHeight-innerHeight)*Number(stop.dataset.progress),behavior:'instant'});} }
+  window.restoreJourneyLocation?.('auto');
   window.dispatchEvent(new Event('scroll'));
 }

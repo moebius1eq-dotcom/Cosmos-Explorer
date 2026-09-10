@@ -54,6 +54,13 @@ function scrollToScale(link, behavior = motionQuery.matches ? "auto" : "smooth")
 }
 
 function restoreLocationScale(behavior = "auto") {
+  const exact = /^#flight=(0(?:\.\d+)?|1(?:\.0+)?)$/.exec(location.hash);
+  const saved = exact ? Number(exact[1]) : history.state?.journeyProgress;
+  if (typeof saved === 'number' && Number.isFinite(saved) && saved >= 0 && saved <= 1) {
+    scrollToScale({dataset:{progress:saved}}, behavior);
+    return;
+  }
+
   const link = scaleIndexLinks.find(candidate => candidate.hash === window.location.hash);
   if (link) scrollToScale(link, behavior);
   else if (!window.location.hash || window.location.hash === "#top") window.scrollTo({ top: 0, behavior });
@@ -74,11 +81,11 @@ function getCurrentScaleIndex(progress) {
 
 function syncLocationToScroll() {
   if (window.scrollY < departure.offsetTop - window.innerHeight * 0.1) {
-    if (window.location.hash && window.location.hash !== "#top") history.replaceState(null, "", "#top");
+    if ((window.location.hash && window.location.hash !== "#top") || history.state?.journeyProgress !== undefined) history.replaceState(null, "", "#top");
     return;
   }
   const link = scaleIndexLinks[getCurrentScaleIndex(currentJourneyProgress)];
-  if (window.location.hash !== link.hash) history.replaceState(null, "", link.hash);
+  history.replaceState({...history.state, journeyProgress:currentJourneyProgress}, "", link.hash);
 }
 
 function setScaleIndex(open) {
@@ -1213,3 +1220,17 @@ window.setFlightStops = function(enabled) {
   const stops = enabled ? [.12,.27,.42,.565,.69,.81,.90,.99] : [.12,.20,.30,.39,.525,.655,.82,.99];
   scaleIndexLinks.forEach((link,index) => { link.dataset.progress=stops[index]; journeyStages[index].progress=stops[index]; });
 };
+
+// Save the camera position on this history entry, not on unrelated home links.
+function rememberJourneyPosition() {
+  if (window.scrollY < departure.offsetTop) { history.replaceState(null, "", "#top"); return; }
+  const progress = clamp((window.scrollY - departure.offsetTop) / Math.max(departure.offsetHeight - window.innerHeight, 1));
+  history.replaceState({...history.state, journeyProgress:progress}, '', location.href);
+  try { sessionStorage.setItem('cosmos-journey-position', String(progress)); } catch { /* Browsing still works without storage. */ }
+}
+window.addEventListener('pagehide', rememberJourneyPosition);
+document.addEventListener('click', event => {
+  if (event.target.closest('.flight-marker, .flight-caption a')) rememberJourneyPosition();
+});
+window.addEventListener('pageshow', event => { if (event.persisted) restoreLocationScale('auto'); });
+window.restoreJourneyLocation = restoreLocationScale;

@@ -32,3 +32,5 @@ dd { margin:8px 0 0; font-size:17px; }
 .physical-source { display:block; margin-top:8px; }
 
 .object-controls button:disabled,.object-visual:disabled { cursor:wait; opacity:.5; }
+
+.object-return { display:inline-block; margin-top:12px; padding:8px 0; color:var(--accent); font-size:11px; letter-spacing:.05em; border-bottom:1px solid var(--line); }
