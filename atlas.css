@@ -30,3 +30,5 @@ dd { margin:8px 0 0; font-size:17px; }
 @media(max-width:700px) { .atlas-header-note { display:none; } .atlas { padding-top:105px; } .observation { grid-template-columns:1fr; gap:15px; } .object-visual img,.object-visual canvas { height:280px; } .object-list { gap:0 20px; margin-top:24px; } }
 
 .physical-source { display:block; margin-top:8px; }
+
+.object-controls button:disabled,.object-visual:disabled { cursor:wait; opacity:.5; }

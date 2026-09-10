@@ -17,6 +17,7 @@ function initialize() {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.015,500000);
   const ambient = new THREE.AmbientLight(0xb3c6e1,.28); scene.add(ambient);
+  const earthFill = new THREE.Color(0x9db9d6), solarFill = new THREE.Color(0xe6d4b9);
   const light = new THREE.DirectionalLight(0xfff0d7,2.8); light.position.set(-30,25,40); scene.add(light);
   const solar = new THREE.Group(); scene.add(solar);
   const loader = new THREE.TextureLoader();
@@ -109,9 +110,9 @@ function initialize() {
     const density=.2+.6*Math.pow(Math.abs(t-.5)*2,2);
     return [v.x+(random()-.5)*spread,v.y+(random()-.5)*spread,v.z+(random()-.5)*spread,density*(.25+random()*.75),[.8,.83,.85]];
   },65);scene.add(web);
-  const horizon = new THREE.Mesh(new THREE.SphereGeometry(47000,64,32),new THREE.ShaderMaterial({transparent:true,side:THREE.BackSide,depthWrite:false,
+  const horizon = new THREE.Mesh(new THREE.SphereGeometry(47000,64,32),new THREE.ShaderMaterial({uniforms:{reveal:{value:0}},transparent:true,side:THREE.BackSide,depthWrite:false,
     vertexShader:'varying vec3 n;varying vec3 v;void main(){vec4 p=modelViewMatrix*vec4(position,1.0);n=normalize(normalMatrix*normal);v=normalize(-p.xyz);gl_Position=projectionMatrix*p;}',
-    fragmentShader:'varying vec3 n;varying vec3 v;void main(){float edge=pow(1.0-abs(dot(normalize(n),normalize(v))),5.0);gl_FragColor=vec4(0.35,0.55,0.68,edge*0.13);}'
+    fragmentShader:'uniform float reveal;varying vec3 n;varying vec3 v;void main(){float edge=pow(1.0-abs(dot(normalize(n),normalize(v))),5.0);gl_FragColor=vec4(0.35,0.55,0.68,edge*0.13*reveal);}'
   }));scene.add(horizon);
   const keys=[];
   const add=(p,id,pos,target,roll=0)=>keys.push({p,id,pos:new THREE.Vector3(...pos),target:new THREE.Vector3(...target),roll});
@@ -155,9 +156,9 @@ function initialize() {
   marker.addEventListener('click',()=>location.href=href(id));
   controls.querySelector('.flight-scales').addEventListener('click',()=>{pause();document.querySelector('.menu-button').click();});
   const play=controls.querySelector('.flight-play');
-  function pause(){running=false;cancelAnimationFrame(raf);play.textContent='▶ Play flight';play.setAttribute('aria-pressed','false');}
+  function pause(){running=false;cancelAnimationFrame(raf);play.textContent=progress>=.999?'↻ Replay flight':'▶ Play flight';play.setAttribute('aria-pressed','false');}
   function tick(now){if(!running)return;const dt=Math.min(now-last,50);last=now;const departure=document.querySelector('.departure');const total=departure.offsetHeight-innerHeight;const p=Math.max(0,(scrollY-departure.offsetTop)/total)+dt/240000;scrollTo({top:departure.offsetTop+Math.min(1,p)*total,behavior:'instant'});if(p>=1)pause();else raf=requestAnimationFrame(tick);}
-  play.setAttribute('aria-pressed','false');play.addEventListener('click',()=>{if(running){pause();return;}running=true;last=performance.now();play.textContent='Ⅱ Pause flight';play.setAttribute('aria-pressed','true');raf=requestAnimationFrame(tick);});
+  play.setAttribute('aria-pressed','false');play.addEventListener('click',()=>{if(running){pause();return;}if(progress>=.999){const departure=document.querySelector('.departure');scrollTo({top:departure.offsetTop,behavior:'instant'});render(0);}running=true;last=performance.now();play.textContent='Ⅱ Pause flight';play.setAttribute('aria-pressed','true');raf=requestAnimationFrame(tick);});
   ['wheel','touchstart','keydown'].forEach(event=>window.addEventListener(event,pause,{passive:true}));
   document.addEventListener('visibilitychange',()=>{pause();if(!document.hidden)render(progress,true);});
   document.addEventListener('click',event=>{if(event.target.closest('.burger'))pause();});
@@ -177,17 +178,19 @@ function initialize() {
     if(p>=.59) id=p<.775?'milky-way':p<.865?'andromeda':p<.955?'cosmic-web':'universe';
     const localSpace=THREE.MathUtils.smoothstep(p,.71,.82);
     stars.material.opacity=THREE.MathUtils.lerp(.7,.12,localSpace);
-    ambient.color.set(p<.15?0x9db9d6:0xe6d4b9);
-    ambient.intensity=p<.15?.25:.19;
+    const sunlight=THREE.MathUtils.smoothstep(p,.135,.175);
+    ambient.color.copy(earthFill).lerp(solarFill,sunlight);
+    ambient.intensity=THREE.MathUtils.lerp(.25,.19,sunlight);
     solar.visible=p<.63;
     Object.values(bodies).forEach((mesh,i)=>{mesh.rotation.y=p*(i%2?1:-1)*1.6;});
     const shrink=1-THREE.MathUtils.smoothstep(p,.55,.62);solar.scale.setScalar(Math.max(.001,shrink));
-    milky.visible=p>.55&&p<.89;andromeda.visible=p>.71&&p<.89;web.visible=p>.83;horizon.visible=p>.93;
+    milky.visible=p>.55&&p<.89;andromeda.visible=p>.71&&p<.89;web.visible=p>.83;horizon.visible=p>.93;horizon.material.uniforms.reveal.value=THREE.MathUtils.smoothstep(p,.93,.975);
     const groupFade=1-THREE.MathUtils.smoothstep(p,.845,.89);
     milky.material.opacity=THREE.MathUtils.smoothstep(p,.55,.63)*.85*groupFade;
     andromeda.material.opacity=.8*groupFade*THREE.MathUtils.smoothstep(p,.71,.77);
     milky.children[0].material.opacity=.32*groupFade;andromeda.children[0].material.opacity=.26*groupFade*THREE.MathUtils.smoothstep(p,.71,.77);
     web.material.opacity=THREE.MathUtils.smoothstep(p,.83,.91)*.65;
+    if(!running)play.textContent=p>=.999?'↻ Replay flight':'▶ Play flight';
     const name=names[id]||id[0].toUpperCase()+id.slice(1);
     const chapter=p<.15?'EARTH SYSTEM':p<.55?'SOLAR SYSTEM':p<.59?'STELLAR NEIGHBORHOOD':p<.755?'MILKY WAY':p<.865?'LOCAL GROUP':'COSMOLOGICAL SCALES';
     if(previousSubject!==id){title.textContent=name;link.textContent=`Explore ${name} ↗`;link.href=href(id);marker.setAttribute('aria-label',`Explore ${name}`);previousSubject=id;}
@@ -197,6 +200,8 @@ function initialize() {
     const noteOpacity=note?THREE.MathUtils.smoothstep(p,note[0],note[0]+.006)*(1-THREE.MathUtils.smoothstep(p,note[1]-.006,note[1])):0;
     annotation.style.opacity=noteOpacity.toFixed(3);annotation.setAttribute('aria-hidden',String(noteOpacity<.15));
     const point=(bodies[id]?bodies[id].getWorldPosition(projected):id==='andromeda'?projected.copy(andromeda.position):projected.set(0,0,0)).project(camera);
+    const markerVisible=point.z>=-1 && point.z<=1 && Math.abs(point.x)<.92 && Math.abs(point.y)<.86;
+    marker.hidden=!markerVisible;
     marker.style.left=`${THREE.MathUtils.clamp((point.x*.5+.5)*innerWidth,45,innerWidth-45)}px`;marker.style.top=`${THREE.MathUtils.clamp((-point.y*.5+.5)*innerHeight,100,innerHeight-240)}px`;
     renderer.render(scene,camera);renderCount++;lastRenderMs=performance.now()-renderStart;
     viewport.dataset.subject=id;

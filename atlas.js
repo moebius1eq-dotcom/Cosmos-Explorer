@@ -6,6 +6,9 @@
   const ctx = canvas.getContext('2d');
   const dialog = document.querySelector('dialog');
   let objects = [], current = 0;
+  const atlasControls = [visual, ...document.querySelectorAll('.object-controls button')];
+  atlasControls.forEach(button => button.disabled = true);
+  document.querySelector('.observation').setAttribute('aria-busy','true');
   function facts(target, data) {
     target.replaceChildren(...Object.entries(data).map(([label, value]) => {
       const row = document.createElement('div'), term = document.createElement('dt'), detail = document.createElement('dd');
@@ -57,7 +60,7 @@
   }
   img.addEventListener('error', () => { img.hidden = true; canvas.hidden = false; ctx.clearRect(0,0,1000,800); ctx.fillStyle='#a6abaa'; ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('Image unavailable — facts remain available',500,400); });
   visual.addEventListener('click', () => {
-    const object = objects[current]; dialog.querySelector('h2').textContent = object.name;
+    const object = objects[current]; if(!object) return; dialog.querySelector('h2').textContent = object.name;
     dialog.querySelector('p').textContent = object.description;
     facts(dialog.querySelector('dl'), object.facts); dialog.showModal();
   });
@@ -70,5 +73,7 @@
     objects = data.filter(o => document.body.dataset.category === 'deep' ? ['milky-way','andromeda','cosmic-web','universe'].includes(o.id) : !['milky-way','andromeda','cosmic-web','universe'].includes(o.id));
     list.replaceChildren(...objects.map(object => { const a = document.createElement('a'); a.href = '#' + object.id; a.textContent = object.name; return a; }));
     select(location.hash.slice(1));
-  }).catch(() => { document.querySelector('.atlas-intro').textContent = 'The atlas could not load. Please refresh the page using a local web server.'; });
+    atlasControls.forEach(button => button.disabled = false);
+    document.querySelector('.observation').setAttribute('aria-busy','false');
+  }).catch(() => { document.querySelector('.observation').setAttribute('aria-busy','false'); document.querySelector('.atlas-intro').textContent = 'The atlas could not load. Please refresh the page using a local web server.'; });
 })();
