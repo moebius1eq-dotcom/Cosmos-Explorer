@@ -1,5 +1,11 @@
 # Cosmos Explorer
 
+## PISCES entrance — local review milestone
+
+The homepage now previews the PISCES puzzle entrance and holds after the final piece locks. The pass-through transition and new homepage are intentionally not implemented yet. Reload the homepage or use **Replay entrance** to review it. The preserved Journey remains reachable at `index.html#departure`; the atlas pages retain their existing URLs. See [entrance notes](docs/pisces-entrance.md) for readiness, fallback behavior and local checks.
+
+Pre-PISCES recovery: annotated tag `pre-pisces-2026-09-12`, branch `codex/pre-pisces`, commit `bc5c693`.
+
 Cosmos Explorer is an interactive astronomy experience built around cinematic scrollytelling. It is designed to make the scale and structure of the universe feel immediate before introducing deeper educational material.
 
 [Open Cosmos Explorer](https://moebius1eq-dotcom.github.io/Cosmos-Explorer/)

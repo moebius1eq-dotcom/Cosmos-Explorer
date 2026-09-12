@@ -65,105 +65,9 @@ a {
   font-size: 0.875rem;
 }
 
-/* Loading sequence */
-.loader {
-  position: fixed;
-  z-index: 50;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: #010202;
-  transition:
-    opacity 1.1s var(--ease-cinematic),
-    visibility 1.1s;
-}
-
-.loader::before,
-.loader::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(transparent 8%, rgba(255, 255, 255, 0.08), transparent 92%);
-}
-
-.loader::before {
-  left: var(--page-padding);
-}
-
-.loader::after {
-  right: var(--page-padding);
-}
-
-.loader.is-complete {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.loader__content {
-  width: min(76vw, 35rem);
-  text-align: center;
-  transition:
-    opacity 0.7s ease,
-    transform 1.1s var(--ease-cinematic),
-    filter 0.8s ease;
-}
-
-.loader.is-exiting .loader__content {
-  opacity: 0;
-  filter: blur(5px);
-  transform: scale(1.16);
-}
-
-.wordmark {
-  margin: 0;
-  text-transform: uppercase;
-}
-
-.wordmark span {
-  display: block;
-}
-
-.wordmark--loader {
-  font-size: clamp(2.15rem, 6vw, 4.75rem);
-  font-weight: 300;
-  line-height: 0.92;
-  letter-spacing: 0.19em;
-}
-
-.wordmark--loader span:last-child {
-  margin-top: 0.22em;
-  font-size: 0.54em;
-  letter-spacing: 0.61em;
-  transform: translateX(0.26em);
-}
-
-.loader__track {
-  height: 1px;
-  margin-top: 3rem;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.loader__progress {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: var(--white);
-  transform: scaleX(0);
-  transform-origin: left;
-  animation: load-progress 2.2s var(--ease-cinematic) forwards;
-}
-
-.loader__status {
-  display: block;
-  margin-top: 0.8rem;
-  color: var(--muted);
-  font-size: 0.625rem;
-  letter-spacing: 0.24em;
-}
+/* Wordmark shared by the preserved Journey hero. */
+.wordmark { margin: 0; text-transform: uppercase; }
+.wordmark span { display: block; }
 
 /* Shared atmospheric layers */
 .starfield {
@@ -803,10 +707,6 @@ body.index-open {
     rgba(159, 200, 224, 0.72) 0 var(--journey-progress-value, 0%),
     rgba(240, 241, 238, 0.16) var(--journey-progress-value, 0%) 100%
   );
-}
-
-@keyframes load-progress {
-  to { transform: scaleX(1); }
 }
 
 @keyframes scroll-pulse {

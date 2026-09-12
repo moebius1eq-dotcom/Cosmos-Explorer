@@ -1,6 +1,4 @@
 const page = document.body;
-const loader = document.querySelector(".loader");
-const loaderStatus = document.querySelector(".loader__status");
 const canvas = document.querySelector(".starfield");
 const context = canvas.getContext("2d", { alpha: true });
 const heroContent = document.querySelector(".hero__content");
@@ -142,19 +140,27 @@ window.addEventListener("load", () => restoreLocationScale("auto"), { once: true
 function loadSurface(src, size, longitude, isEarth, assign) {
   return new Promise(resolve => {
     const image = new Image();
-    image.addEventListener("load", () => {
+    let settled = false;
+    const finish = failed => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      image.onload = image.onerror = null;
+      drawJourney(currentJourneyProgress);
+      resolve(failed ? src : null);
+    };
+    // A stalled request explicitly settles on the existing shaded sphere.
+    const deadline = setTimeout(() => { finish(true); image.src = ""; }, 15000);
+    image.onload = () => {
       try {
         assign(createSphereTexture(image, size, longitude, isEarth));
+        finish(false);
       } catch (error) {
         console.warn("Surface projection unavailable; use a local HTTP server.", error);
+        finish(true);
       }
-      drawJourney(currentJourneyProgress);
-      resolve();
-    });
-    image.addEventListener("error", () => {
-      drawJourney(currentJourneyProgress);
-      resolve();
-    });
+    };
+    image.onerror = () => finish(true);
     image.src = src;
   });
 }
@@ -164,11 +170,19 @@ const surfaceReady = Promise.all([
   loadSurface("assets/moon-lroc.jpg", 1024, 0, false, value => moonTexture = value),
 ]);
 
-const loadingStates = [
-  [450, "CALIBRATING OPTICS"],
-  [1050, "LOCATING DEEP SPACE"],
-  [1700, "OBSERVATORY ONLINE"],
-];
+// The entrance owns its animation. This promise reports prepared resources or
+// explicit usable fallbacks, independently of any visual loading duration.
+window.cosmosAssetsReady = (async () => {
+  const flightReady = import('./flight.js')
+    .then(() => window.cosmosFlightReady)
+    .catch(error => {
+      console.info('3D flight unavailable: retaining the canvas journey.', error);
+      return { fallback:true, failedAssets:['flight.js'] };
+    });
+  const [surfaceFailures, flight] = await Promise.all([surfaceReady, flightReady]);
+  const failedAssets = [...new Set([...surfaceFailures.filter(Boolean), ...flight.failedAssets])];
+  return { fallback:flight.fallback || failedAssets.length > 0, failedAssets };
+})();
 
 function createStar(index) {
   const depth = seededNoise(index, 11);
@@ -674,6 +688,7 @@ function drawObservableUniverse(context2d, x, y, radius, opacity) {
 }
 
 function drawJourney(progress) {
+  if (page.classList.contains('is-loading')) { journeyObjects = []; return; }
   if (window.renderCosmosFlight) { journeyObjects = []; window.renderCosmosFlight(progress); return; }
   journeyObjects = [];
   if (progress > 0.76) journeyObjects.push({ id: progress > 0.9 ? "universe" : "cosmic-web", x: innerWidth / 2, y: innerHeight / 2, radius: Math.min(innerWidth, innerHeight) * 0.35 });
@@ -1002,7 +1017,7 @@ function drawJourney(progress) {
 
 function drawStarfield(time = 0) {
   animationFrame = 0;
-  if (document.hidden || (window.renderCosmosFlight && window.scrollY >= departure.offsetTop)) {
+  if (document.hidden || page.classList.contains('is-loading') || (window.renderCosmosFlight && window.scrollY >= departure.offsetTop)) {
     context.clearRect(0,0,window.innerWidth,window.innerHeight);
     return;
   }
@@ -1133,35 +1148,6 @@ function updateScrollScene() {
   if (motionQuery.matches) drawStarfield();
 }
 
-function completeLoadingSequence() {
-  loader.classList.add("is-exiting");
-
-  window.setTimeout(() => {
-    loader.classList.add("is-complete");
-    page.classList.remove("is-loading");
-    page.classList.add("is-ready");
-  }, motionQuery.matches ? 20 : 720);
-}
-
-async function initializeLoadingSequence() {
-  if (sessionStorage.getItem("cosmos-intro-seen") || motionQuery.matches) {
-    completeLoadingSequence();
-    return;
-  }
-
-  loadingStates.forEach(([delay, label]) => {
-    window.setTimeout(() => {
-      loaderStatus.textContent = label;
-    }, delay);
-  });
-
-  const minimumIntro = new Promise(resolve => window.setTimeout(resolve, 2350));
-  const surfaceTimeout = new Promise(resolve => window.setTimeout(resolve, 6000));
-  await Promise.all([minimumIntro, Promise.race([surfaceReady, surfaceTimeout])]);
-  sessionStorage.setItem("cosmos-intro-seen", "true");
-  completeLoadingSequence();
-}
-
 window.addEventListener("pointermove", (event) => {
   pointer.targetX = event.clientX / window.innerWidth - 0.5;
   pointer.targetY = event.clientY / window.innerHeight - 0.5;
@@ -1213,7 +1199,11 @@ resizeStarfield();
 resizeJourneyCanvas();
 updateScrollScene();
 animationFrame = requestAnimationFrame(drawStarfield);
-initializeLoadingSequence();
+window.addEventListener('cosmos:entrance-dismissed', () => {
+  updateScrollScene();
+  cancelAnimationFrame(animationFrame);
+  animationFrame = requestAnimationFrame(drawStarfield);
+});
 
 function objectAtPointer(event) {
   const bounds = journeyCanvas.getBoundingClientRect();

@@ -1,0 +1,71 @@
+.pisces-entrance {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  overflow: hidden;
+  background: #020303;
+  isolation: isolate;
+}
+
+.entrance-scene, .entrance-scene canvas, .entrance-scene svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.entrance-signature {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: max(13svh, 68px);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 850ms ease;
+}
+
+.entrance-wordmark {
+  margin: 0;
+  font-size: clamp(15px, 1.5vw, 20px);
+  font-weight: 300;
+  letter-spacing: .48em;
+  text-indent: .48em;
+  color: #b4bab8;
+}
+
+.entrance-subtitle {
+  margin: 15px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: .045em;
+  color: #646e6d;
+}
+
+.pisces-entrance[data-state="locked"] .entrance-signature { opacity: 1; }
+.entrance-replay {
+  position: absolute;
+  right: var(--page-padding);
+  bottom: max(18px, env(safe-area-inset-bottom));
+  min-height: 44px;
+  padding: 10px 0 10px 16px;
+  border: 0;
+  background: none;
+  color: #89928f;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.entrance-replay span { margin-left: 8px; }
+.entrance-replay:hover { color: #c9cfcb; }
+.entrance-replay[hidden], .pisces-entrance[hidden] { display: none; }
+
+@media (max-height: 500px) {
+  .entrance-signature { bottom: 32px; }
+  .entrance-subtitle { margin-top: 8px; font-size: 10px; }
+  .entrance-replay { bottom: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrance-signature { transition: none; }
+}

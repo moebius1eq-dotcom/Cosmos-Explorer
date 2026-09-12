@@ -30,23 +30,25 @@
     <link rel="stylesheet" href="style.css" />
     <script src="script.js" defer></script>
     <script src="momentum.js" defer></script>
-  <link rel="stylesheet" href="navigation.css"><script src="navigation.js" defer></script><link rel="stylesheet" href="flight.css"><script type="module" src="flight.js"></script></head>
+    <link rel="stylesheet" href="navigation.css" />
+    <script src="navigation.js" defer></script>
+    <link rel="stylesheet" href="flight.css" />
+    <link rel="stylesheet" href="entrance.css" />
+    <script type="module" src="entrance.js"></script>
+  </head>
   <body class="is-loading">
     <noscript>
       <div class="noscript-message">Cosmos Explorer requires JavaScript for its motion experience.</div>
     </noscript>
 
-    <div class="loader" aria-live="polite" aria-label="Loading Cosmos Explorer">
-      <div class="loader__content">
-        <p class="wordmark wordmark--loader" aria-label="Cosmos Explorer">
-          <span>COSMOS</span>
-          <span>EXPLORER</span>
-        </p>
-        <div class="loader__track" aria-hidden="true">
-          <span class="loader__progress"></span>
-        </div>
-        <span class="loader__status">INITIALIZING OBSERVATORY</span>
+    <div class="loader pisces-entrance" role="region" aria-label="PISCES entrance" aria-busy="true" data-state="waiting">
+      <div class="entrance-scene" aria-hidden="true"></div>
+      <div class="entrance-signature">
+        <p class="entrance-wordmark">PISCES</p>
+        <p class="entrance-subtitle">Piece together the universe.</p>
       </div>
+      <p class="visually-hidden entrance-status" role="status">Preparing the astronomy experience.</p>
+      <button class="entrance-replay" type="button" hidden>Replay entrance <span aria-hidden="true">↺</span></button>
     </div>
 
     <canvas class="starfield" aria-hidden="true"></canvas>

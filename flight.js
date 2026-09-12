@@ -3,10 +3,30 @@ import * as THREE from './vendor/three.module.js';
 // A perspective camera follows authored positions and look-at targets. Geometry
 // occupies actual depth; distances are composed for storytelling, not an ephemeris.
 const viewport = document.querySelector('.journey-viewport');
-let renderer;
-try { renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' }); }
-catch { console.info('WebGL unavailable: retaining the canvas journey.'); }
-if (renderer) initialize();
+let renderer, resolveFlightReady, initialized = false, flightActive = true;
+const failedAssets = new Set(), pendingAssets = new Map();
+window.cosmosFlightReady = new Promise(resolve => { resolveFlightReady = resolve; });
+function finishReadiness() {
+  if (initialized && pendingAssets.size === 0) {
+    resolveFlightReady({ fallback:failedAssets.size > 0, failedAssets:[...failedAssets] });
+  }
+}
+try {
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' });
+  initialize();
+  initialized = true;
+  finishReadiness();
+} catch (error) {
+  flightActive = false;
+  for (const fail of [...pendingAssets.values()]) fail();
+  renderer?.dispose();
+  viewport.querySelectorAll('.flight-canvas, .flight-caption, .flight-controls, .flight-marker, .flight-annotation').forEach(element => element.remove());
+  delete window.renderCosmosFlight;
+  document.body.classList.remove('has-flight');
+  window.setFlightStops?.(false);
+  console.info('WebGL unavailable: retaining the canvas journey.', error);
+  resolveFlightReady({ fallback:true, failedAssets:[...failedAssets, 'WebGL initialization'] });
+}
 
 function initialize() {
   renderer.domElement.className = 'flight-canvas';
@@ -20,19 +40,42 @@ function initialize() {
   const earthFill = new THREE.Color(0x9db9d6), solarFill = new THREE.Color(0xe6d4b9);
   const light = new THREE.DirectionalLight(0xfff0d7,2.8); light.position.set(-30,25,40); scene.add(light);
   const solar = new THREE.Group(); scene.add(solar);
-  const loader = new THREE.TextureLoader();
+  const manager = new THREE.LoadingManager(finishReadiness);
+  const loader = new THREE.TextureLoader(manager);
   let progress = 0, lastRendered = -1, renderCount = 0, lastRenderMs = 0;
   const target = new THREE.Vector3(), projected = new THREE.Vector3();
   const textures = [];
-  function map(url) {
-    const texture = loader.load(url,()=>render(progress,true),undefined,()=>console.info('Texture unavailable:',url));
+  function map(url, material, fallbackColor) {
+    let deadline, texture;
+    const fail = () => {
+      if (!pendingAssets.has(url)) return;
+      clearTimeout(deadline);
+      pendingAssets.delete(url);
+      failedAssets.add(url);
+      material.map = null;
+      material.color.set(fallbackColor);
+      material.needsUpdate = true;
+      texture?.dispose();
+      if (flightActive) render(progress,true);
+      finishReadiness();
+    };
+    pendingAssets.set(url, fail);
+    texture = loader.load(url, () => {
+      if (!pendingAssets.has(url)) { texture.dispose(); return; }
+      clearTimeout(deadline);
+      pendingAssets.delete(url);
+      if (flightActive) render(progress,true);
+    }, undefined, fail);
+    // Settling a stalled map means choosing a real untextured substitute.
+    deadline = setTimeout(fail, 15000);
     texture.colorSpace=THREE.SRGBColorSpace; texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); textures.push(texture); return texture;
   }
   const geometry = new THREE.SphereGeometry(1,64,48);
   const bodies = {};
+  const fallbackColors = { earth:0x264454, moon:0x81817d, sun:0xe5bc73, mercury:0x8a8580, venus:0xb79b6c, mars:0xa66d51, jupiter:0xb59b80, saturn:0xc0ad84, uranus:0x79a5a9, neptune:0x4c72a4 };
   function body(id,radius,position,url,emissive=false) {
-    const texture=map(url);
-    const material=emissive ? new THREE.MeshBasicMaterial({map:texture}) : new THREE.MeshStandardMaterial({map:texture,roughness:1});
+    const material=emissive ? new THREE.MeshBasicMaterial() : new THREE.MeshStandardMaterial({roughness:1});
+    material.map=map(url,material,fallbackColors[id]);
     const mesh=new THREE.Mesh(geometry,material); mesh.scale.setScalar(radius); mesh.position.set(...position); mesh.userData={id,radius}; solar.add(mesh); bodies[id]=mesh; return mesh;
   }
   body('earth',1,[0,0,0],'assets/earth-blue-marble.jpg');
@@ -170,7 +213,7 @@ function initialize() {
   document.addEventListener('click',event=>{if(event.target.closest('.burger'))pause();});
   function render(p,force=false) {
     progress=p;
-    if(document.hidden || (!force && p===lastRendered)) return;
+    if(!flightActive || document.hidden || document.body.classList.contains('is-loading') || (!force && p===lastRendered)) return;
     const renderStart=performance.now();lastRendered=p;
     let index=keys.findIndex(k=>k.p>=p);if(index<1)index=1;
     const a=keys[index-1],b=keys[index];const t=THREE.MathUtils.clamp((p-a.p)/(b.p-a.p),0,1);const ease=t*t*(3-2*t);
@@ -216,6 +259,13 @@ function initialize() {
   window.renderCosmosFlight=render;
   document.body.classList.add('has-flight');render(0);
   window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);render(progress,true);});
+  window.addEventListener('cosmos:entrance-dismissed',()=>render(progress,true));
+  renderer.domElement.addEventListener('webglcontextlost',()=>{
+    flightActive=false;
+    failedAssets.add('WebGL context');
+    for (const fail of [...pendingAssets.values()]) fail();
+    finishReadiness();
+  });
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();pause();delete window.renderCosmosFlight;window.setFlightStops?.(false);document.body.classList.remove('has-flight');renderer.domElement.hidden=true;caption.hidden=true;controls.hidden=true;marker.hidden=true;annotation.hidden=true;window.dispatchEvent(new Event('scroll'));});
   // Read-only camera and render diagnostics for path and performance checks.
   window.cosmosFlightState=()=>({progress,renderCount,lastRenderMs,drawCalls:renderer.info.render.calls,points:renderer.info.render.points,triangles:renderer.info.render.triangles,subject:id,camera:camera.position.toArray(),target:keys.find(k=>k.id===id)?.target.toArray()});
