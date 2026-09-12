@@ -34,3 +34,6 @@ dd { margin:8px 0 0; font-size:17px; }
 .object-controls button:disabled,.object-visual:disabled { cursor:wait; opacity:.5; }
 
 .object-return { display:inline-block; margin-top:12px; padding:8px 0; color:var(--accent); font-size:11px; letter-spacing:.05em; border-bottom:1px solid var(--line); }
+
+.object-visual { position:relative; }
+.object-visual .object-image-status { position:absolute; top:42%; left:8%; width:84%; margin:0; font-size:12px; line-height:1.7; letter-spacing:.02em; color:var(--muted); }

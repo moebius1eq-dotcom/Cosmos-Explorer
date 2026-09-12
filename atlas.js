@@ -5,7 +5,10 @@
   const canvas = visual.querySelector('canvas');
   const ctx = canvas.getContext('2d');
   const dialog = document.querySelector('dialog');
-  let objects = [], current = 0;
+  let objects = [], current = 0, imageRequest = 0;
+  const imageStatus=document.createElement('span');
+  imageStatus.className='object-image-status';imageStatus.setAttribute('role','status');imageStatus.hidden=true;
+  visual.append(imageStatus);
   try {
     const stored = sessionStorage.getItem('cosmos-journey-position');
     const position = stored === null ? NaN : Number(stored);
@@ -62,14 +65,28 @@
     physical.hidden = !object.physicalSource;
     if (object.physicalSource) physical.href = object.physicalSource;
     const url = object.image || (['earth','moon'].includes(object.id) ? `assets/atlas-${object.id}.png` : null);
-    img.hidden = !url; canvas.hidden = !!url;
-    if (url) { img.src = url; img.alt = `${object.name} — NASA imagery`; }
-    else illustration(object);
+    const request=++imageRequest;
+    img.hidden=true;canvas.hidden=false;imageStatus.hidden=true;
+    if (url) {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      imageStatus.textContent=`Loading ${object.name} image…`;imageStatus.hidden=false;
+      const pending=new Image();
+      pending.onload=async()=>{
+        try { await pending.decode(); } catch { /* A loaded image can still be displayed. */ }
+        if(request!==imageRequest)return;
+        img.src=url;img.alt=`${object.name} — NASA imagery`;
+        img.hidden=false;canvas.hidden=true;imageStatus.hidden=true;
+      };
+      pending.onerror=()=>{
+        if(request!==imageRequest)return;
+        imageStatus.textContent='Image unavailable. You can still explore the facts.';
+      };
+      pending.src=url;
+    } else illustration(object);
     visual.setAttribute('aria-label', `Inspect ${object.name} facts`);
     document.querySelector('.object-credit').textContent = url ? 'Imagery: NASA and mission partners. Color processing and views vary by mission; images are not to a common scale.' : 'Schematic illustration · not to scale';
     list.querySelectorAll('a').forEach(a => { if(a.hash === '#' + object.id) a.setAttribute('aria-current','true'); else a.removeAttribute('aria-current'); });
   }
-  img.addEventListener('error', () => { img.hidden = true; canvas.hidden = false; ctx.clearRect(0,0,1000,800); ctx.fillStyle='#a6abaa'; ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('Image unavailable — facts remain available',500,400); });
   visual.addEventListener('click', () => {
     const object = objects[current]; if(!object) return; dialog.querySelector('h2').textContent = object.name;
     dialog.querySelector('p').textContent = object.description;
