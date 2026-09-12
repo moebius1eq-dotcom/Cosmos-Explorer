@@ -1,67 +1,51 @@
-// Shared edges make the center piece fit its four neighbors exactly.
-export const PIECE_SIZE = 1.58;
-const clamp = value => Math.max(0, Math.min(1, value));
-export const ease = value => { const t = clamp(value); return t * t * t * (t * (6 * t - 15) + 10); };
-const noise = (x, y, salt) => { const n = Math.sin(x * 127.1 + y * 311.7 + salt * 73.3) * 43758.5453; return n - Math.floor(n); };
+// Five unique faces partition one irregular structure. Shared coordinates define
+// its fractures; there is no tile grid, repeated cut, or jigsaw connector.
+const A = [-.92, -.96], B = [.88, -.72], C = [1.04, .75];
+const D = [-.50, 1.04], E = [-1.12, .20];
+export const perimeter = [[-3.65, -1.75], [2.70, -1.60], [3.55, -.35],
+  [3.12, 1.68], [-2.50, 1.82], [-3.85, .40]];
+const [P, Q, R, S, T, U] = perimeter;
 
-function corner(x, y) {
-  return [(x - .5 + (noise(x, y, 1) - .5) * .13) * PIECE_SIZE,
-    (y - .5 + (noise(x, y, 2) - .5) * .13) * PIECE_SIZE];
+export const fragments = [
+  { id: 'lower', points: [P, Q, B, A], offset: [.12, -.28, -.95], rotation: [-.14, -.05, .025] },
+  { id: 'right', points: [Q, R, S, C, B], offset: [.38, -.05, -.45], rotation: [-.035, .10, -.055] },
+  { id: 'upper', points: [S, T, D, C], offset: [-.10, .30, -1.25], rotation: [.12, .06, -.045] },
+  { id: 'left', points: [T, U, P, A, E, D], offset: [-.30, .04, -.60], rotation: [.05, -.12, .02] },
+  { id: 'keystone', points: [A, B, C, D, E], offset: [2.45, .85, 2.25], rotation: [.35, -.48, -.45] },
+];
+
+export function centroid(points) {
+  return points.reduce((sum, [x, y]) => [sum[0] + x / points.length, sum[1] + y / points.length], [0, 0]);
 }
 
-export function edgePoints(x, y, vertical = false) {
-  const a = corner(x, y), b = corner(x + !vertical, y + vertical);
-  const dx = b[0] - a[0], dy = b[1] - a[1];
-  const sign = noise(x, y, vertical ? 3 : 4) > .5 ? 1 : -1;
-  const depth = .68 + noise(x, y, 5) * .23;
-  const skew = (noise(x, y, 6) - .5) * .09;
-  const segments = [
-    [[0, 0], [.12, 0], [.25, 0], [.36 + skew, 0]],
-    [[.36 + skew, 0], [.43 + skew, 0], [.31 + skew, .10], [.36 + skew, .16]],
-    [[.36 + skew, .16], [.41 + skew, .24], [.59 + skew, .23], [.64 + skew, .15]],
-    [[.64 + skew, .15], [.69 + skew, .09], [.57 + skew, 0], [.64 + skew, 0]],
-    [[.64 + skew, 0], [.77, 0], [.88, 0], [1, 0]],
-  ];
-  const result = [];
-  segments.forEach((points, segment) => {
-    for (let i = segment ? 1 : 0; i <= 12; i++) {
-      const t = i / 12, u = 1 - t;
-      const weights = [u ** 3, 3 * u * u * t, 3 * u * t * t, t ** 3];
-      const along = points.reduce((sum, p, j) => sum + p[0] * weights[j], 0);
-      const normal = points.reduce((sum, p, j) => sum + p[1] * weights[j], 0) * sign * depth;
-      result.push([a[0] + dx * along - dy * normal, a[1] + dy * along + dx * normal]);
-    }
-  });
-  return result;
+export function area(points) {
+  return Math.abs(points.reduce((sum, [x, y], i) => {
+    const next = points[(i + 1) % points.length];
+    return sum + x * next[1] - next[0] * y;
+  }, 0)) / 2;
 }
 
-export function pieceOutline(column, row) {
-  const sides = [edgePoints(column, row), edgePoints(column + 1, row, true),
-    edgePoints(column, row + 1).reverse(), edgePoints(column, row, true).reverse()];
-  return sides.flatMap((side, index) => index ? side.slice(1) : side)
-    .map(([x, y]) => [x - column * PIECE_SIZE, y - row * PIECE_SIZE]);
+export function smooth(value) {
+  const t = Math.max(0, Math.min(1, value));
+  return t * t * t * (t * (6 * t - 15) + 10);
 }
 
-// Time here is visible animation time, not a substitute for asset readiness.
-export function createEntranceTimeline() {
-  let elapsed = 0, phaseElapsed = 0, ready = false, state = 'waiting';
+export function fragmentPose(fragment, snapshot, reduced = false) {
+  const center = centroid(fragment.points);
+  const final = fragment.id === 'keystone';
+  const alignment = final ? snapshot.approach : smooth((snapshot.approach - .32) / .68);
+  const remaining = 1 - alignment;
+  const time = reduced ? 0 : snapshot.elapsed * .00012;
+  const drift = snapshot.state === 'waiting' ? 1 : remaining;
+  const distance = Math.hypot(...center);
+  const wave = Math.exp(-Math.pow((snapshot.resonance * 6 - distance) / .8, 2))
+    * Math.sin(Math.PI * snapshot.resonance);
   return {
-    ready() { ready = true; },
-    reset() { elapsed = 0; phaseElapsed = 0; state = 'waiting'; },
-    step(delta, reduced = false) {
-      elapsed += Math.max(0, delta);
-      if (ready && reduced) state = 'locked';
-      if (state === 'waiting' && ready && elapsed >= 1600) { state = 'approaching'; phaseElapsed = 0; }
-      if (state === 'approaching') {
-        phaseElapsed += Math.max(0, delta);
-        if (phaseElapsed >= 2400) { state = 'seating'; phaseElapsed = 0; }
-      } else if (state === 'seating') {
-        phaseElapsed += Math.max(0, delta);
-        if (phaseElapsed >= 210) { state = 'locked'; phaseElapsed = 0; }
-      }
-      return { state, elapsed, reveal: reduced ? 1 : ease(elapsed / 1600),
-        approach: state === 'waiting' ? 0 : state === 'approaching' ? ease(phaseElapsed / 2400) : 1,
-        seat: state === 'locked' ? 1 : state === 'seating' ? ease(phaseElapsed / 210) : 0 };
-    },
+    position: [center[0] + fragment.offset[0] * remaining + Math.sin(time + distance) * .022 * drift,
+      center[1] + fragment.offset[1] * remaining + Math.sin(time * .7 + distance) * .016 * drift,
+      fragment.offset[2] * remaining + (final ? .085 * alignment * (1 - snapshot.seat) : 0) - wave * .012],
+    rotation: fragment.rotation.map((angle, axis) => angle * remaining
+      + (reduced ? 0 : Math.sin(time * .7 + distance + axis) * .012 * drift)),
+    wave,
   };
 }
