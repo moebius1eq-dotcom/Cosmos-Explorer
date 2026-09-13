@@ -2,7 +2,7 @@
 
 ## PISCES entrance — local review milestone
 
-The homepage previews five sculptural fragments assembling into the PISCES identity, then holds the completed structure. The pass-through transition and new homepage are intentionally not implemented yet. Reload the homepage or use **Replay entrance** to review it. The preserved Journey remains reachable at `index.html#departure`; the atlas pages retain their existing URLs. See [entrance notes](docs/pisces-entrance.md) for readiness, fallback behavior and local checks.
+The homepage previews a kinetic montage of planetary imagery and astronomy diagrams assembling into the PISCES identity. It holds after revealing **PISCES / PIECE TOGETHER THE UNIVERSE**. The pass-through transition and new homepage are intentionally not implemented yet. Reload the homepage or use **Replay entrance** to review it. The preserved Journey remains reachable at `index.html#departure`; atlas URLs are unchanged. See [entrance notes](docs/pisces-entrance.md) for readiness, sources, fallbacks and local checks.
 
 Pre-PISCES recovery: annotated tag `pre-pisces-2026-09-12`, branch `codex/pre-pisces`, commit `bc5c693`.
 

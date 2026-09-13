@@ -1,27 +1,36 @@
-const REVEAL_DURATION = 1800;
-const PHASE_DURATION = { approaching: 3000, seating: 240, settling: 1100 };
-const NEXT_PHASE = { approaching: 'seating', seating: 'settling', settling: 'locked' };
+const PHASES = ['discovery', 'assembly', 'convergence', 'awaiting', 'final-piece', 'seating', 'settling', 'identity', 'locked'];
+const DURATION = { discovery: 1800, assembly: 3600, convergence: 2200, 'final-piece': 1050, seating: 180, settling: 650, identity: 1400 };
 const clamp = value => Math.max(0, Math.min(1, value));
 const ease = value => {
   const t = clamp(value);
   return t * t * t * (t * (6 * t - 15) + 10);
 };
 
-// Call ready() only after resources have settled. Time controls choreography,
-// never readiness; elapsed counts visible animation time and freezes at lock.
+// Procedural previews may assemble while resources load. Only ready() releases
+// the central piece; visible time never substitutes for that readiness signal.
 export function createEntranceTimeline() {
-  let elapsed = 0, phaseElapsed = 0, resourcesReady = false, state = 'waiting';
+  let elapsed = 0, phaseElapsed = 0, resourcesReady = false, state = 'discovery';
 
-  function snapshot(reduced) {
-    const resonance = state === 'locked' ? 1 : state === 'settling' ? phaseElapsed / PHASE_DURATION.settling : 0;
+  function snapshot() {
+    const index = PHASES.indexOf(state);
+    const progress = (phase, curve = ease) => {
+      const target = PHASES.indexOf(phase);
+      if (index < target) return 0;
+      if (index > target) return 1;
+      return curve(clamp(phaseElapsed / DURATION[phase]));
+    };
     return {
       state,
       elapsed,
-      reveal: reduced || state === 'locked' ? 1 : ease(elapsed / REVEAL_DURATION),
-      approach: state === 'waiting' ? 0 : state === 'approaching' ? ease(phaseElapsed / PHASE_DURATION.approaching) : 1,
-      seat: state === 'waiting' || state === 'approaching' ? 0 : state === 'seating' ? ease(phaseElapsed / PHASE_DURATION.seating) : 1,
-      resonance,
-      brand: ease((resonance - .5) * 2),
+      discovery: progress('discovery'),
+      // Equal-time intervals gather progressively more of the montage.
+      assembly: progress('assembly', t => t * t),
+      convergence: progress('convergence'),
+      finalPiece: progress('final-piece'),
+      seat: progress('seating'),
+      resonance: progress('settling', t => t),
+      brand: progress('identity'),
+      reveal: state === 'discovery' ? ease(phaseElapsed / 500) : 1,
     };
   }
 
@@ -30,41 +39,37 @@ export function createEntranceTimeline() {
     reset() {
       elapsed = 0;
       phaseElapsed = 0;
-      state = 'waiting';
+      state = 'discovery';
     },
     step(delta, reduced = false) {
-      if (state === 'locked') return snapshot(reduced);
-      if (resourcesReady && reduced) {
-        state = 'locked';
-        phaseElapsed = 0;
-        return snapshot(true);
-      }
-
+      if (state === 'locked') return snapshot();
       let remaining = Number.isFinite(delta) ? Math.max(0, delta) : 0;
-      if (state === 'waiting') {
-        const consumed = resourcesReady
-          ? Math.min(remaining, Math.max(0, REVEAL_DURATION - elapsed))
-          : remaining;
-        elapsed += consumed;
-        remaining -= consumed;
-        if (!resourcesReady || elapsed < REVEAL_DURATION) return snapshot(reduced);
-        state = 'approaching';
+      if (reduced) {
+        state = resourcesReady ? 'locked' : 'awaiting';
+        phaseElapsed = 0;
+        if (state === 'locked') return snapshot();
       }
 
-      // Preserve excess delta at every boundary, including a zero-time step
-      // after readiness arrives late. Discard time beyond the final lock.
+      // Carry excess delta through exact boundaries. An unresolved gate
+      // consumes visible waiting time; a final lock consumes no further time.
       while (state !== 'locked') {
-        const duration = PHASE_DURATION[state];
+        if (state === 'awaiting') {
+          if (!resourcesReady) {
+            elapsed += remaining;
+            break;
+          }
+          state = 'final-piece';
+        }
+        const duration = DURATION[state];
         const consumed = Math.min(remaining, duration - phaseElapsed);
         phaseElapsed += consumed;
         elapsed += consumed;
         remaining -= consumed;
         if (phaseElapsed < duration) break;
-        state = NEXT_PHASE[state];
+        state = PHASES[PHASES.indexOf(state) + 1];
         phaseElapsed = 0;
-        if (remaining === 0) break;
       }
-      return snapshot(reduced);
+      return snapshot();
     },
   };
 }
